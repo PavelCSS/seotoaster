@@ -40,7 +40,13 @@ class Backend_PageController extends Zend_Controller_Action {
         $checkFaPull = false; //flag shows that system needs to check featured areas in session
         $pageForm    = new Application_Form_Page();
         $pageId      = $this->getRequest()->getParam('id');
+        $pageLang    = $this->getRequest()->getParam('lang');
         $mapper      = Application_Model_Mappers_PageMapper::getInstance();
+        if(isset($pageLang)){
+            $mapper->setName('page_' . $pageLang);
+        }
+
+        // $mapper->setOptions(array('_name' => 'page' . $pageLang));
 
         if ($pageId) {
             // search page by id
@@ -235,6 +241,7 @@ class Backend_PageController extends Zend_Controller_Action {
 
         // page help section
         $this->view->helpSection = ($pageId) ? 'editpage' : 'addpage';
+        $this->view->localizationSection = $pageLang;
 
         if($page->getOptimized()) {
             $pageForm->lockFields(array('h1', 'headerTitle', 'url', 'navName', 'metaDescription', 'metaKeywords', 'teaserText'));

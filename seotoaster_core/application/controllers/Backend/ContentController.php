@@ -38,6 +38,11 @@ class Backend_ContentController extends Zend_Controller_Action {
 
         // content help section
         $this->view->helpSection  = 'content';
+        $this->view->localizationSection = $this->getRequest()->getParam('lang');
+        $container = Application_Model_Mappers_ContainerMapper::getInstance();
+        if(isset($this->view->localizationSection)){
+            $container->getDbTable()->setName('container_' . $this->view->localizationSection);
+        }
 
 		$this->_helper->AjaxContext()->addActionContext('loadfiles', 'json')->initContext('json');
 		$this->_helper->AjaxContext()->addActionContext('refreshfolders', 'json')->initContext('json');
@@ -63,6 +68,7 @@ class Backend_ContentController extends Zend_Controller_Action {
 	public function editAction() {
 		if(!$this->getRequest()->isPost()) {
             $container = Application_Model_Mappers_ContainerMapper::getInstance();
+
             if ($this->getRequest()->getParam('id')) {
                 $container = $container->find(
                     $this->getRequest()->getParam('id')

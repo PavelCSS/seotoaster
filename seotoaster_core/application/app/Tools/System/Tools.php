@@ -21,6 +21,13 @@ class Tools_System_Tools {
 
     const RECAPTCHA_PRIVATE_KEY = 'recaptchaPrivateKey';
 
+    const LOCALIZATION_METHOD = 'getLocalizationTable';
+
+    private static $_systemTables = array(
+        'page',
+        'container'
+    );
+
 	public static function getUrlPath($url) {
 		$parsedUrl = self::_proccessUrl($url);
 		return (isset($parsedUrl['path'])) ? trim($parsedUrl['path'], '/')  . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '') : '';
@@ -374,5 +381,57 @@ class Tools_System_Tools {
     public static function makeSpace($content)
     {
         return preg_replace("/[^A-Za-z0-9 ]/", '&nbsp;', $content);
+    }
+
+    private static function getAllowedTables() {
+        $method = self::LOCALIZATION_METHOD;
+        $tableNames = self::$_systemTables;
+        $enabledPlugins = Tools_Plugins_Tools::getEnabledPlugins(true);
+        if(!empty ($enabledPlugins)) {
+            foreach ($enabledPlugins as $pluginName) {
+                if(method_exists($pluginName, $method)) {
+                    $tables = $pluginName::$method();
+                    $tableNames = array_merge($tables, $tableNames);
+                }
+            }
+        }
+        return $tableNames;
+    }
+
+    public static function cloneLocalizationDbTable() {
+        $tableNames   = self::getAllowedTables();
+        $dbAdapter    = Zend_Registry::get('dbAdapter');
+        $config       = Application_Model_Mappers_ConfigMapper::getInstance()->getConfig();
+
+        if(empty($config['localization'])){
+            return false;
+        }
+
+        $localization = explode(',', $config['localization']);
+
+        foreach($tableNames as $tableName){
+            foreach ($localization as $lang) {
+                $dbAdapter->query('CREATE TABLE IF NOT EXISTS `' . $tableName . '_' . $lang . '` AS SELECT * FROM ' . $tableName . '`');
+            }
+        }
+    }
+
+    public static function removeLocalizationDbTable() {
+        $tableNames      = self::getAllowedTables();
+        $dbAdapter       = Zend_Registry::get('dbAdapter');
+        $config          = Application_Model_Mappers_ConfigMapper::getInstance()->getConfig();
+        $localization    = explode(',', $config['localization']);
+        $language        = new Helpers_Action_Language;
+        $localizationAll = $language->getLanguages(false);
+
+        foreach ($localization as $lang) {
+            unset($localizationAll[$lang]);
+        }
+
+        foreach($tableNames as $tableName){
+            foreach ($localizationAll as $key => $lang) {
+                $dbAdapter->query('DROP TABLE IF EXISTS  `' . $tableName . '_' . $key . '`');
+            }
+        }
     }
 }

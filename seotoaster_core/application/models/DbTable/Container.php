@@ -4,6 +4,10 @@ class Application_Model_DbTable_Container extends Zend_Db_Table_Abstract {
 
 	protected $_name = 'container';
 
+    public function setName($name){
+        $this->_name = $name;
+    }
+
 	/*protected $_dependentTables = array(
 		'Application_Model_DbTable_LinkContainer'
 	);*/

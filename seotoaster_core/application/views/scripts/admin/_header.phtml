@@ -3,6 +3,29 @@
 <?php endif;?>
 
 <div class="closebutton">
+	<?php if(isset($this->localizationSection)){
+        $website      = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
+        $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
+        $localization = explode(',', $configHelper->getConfig('localization'));
+        if ($localization) {
+            echo '<div class="btn-set">';
+
+            $checked = !$this->localizationSection ? 'checked' : '';
+            echo '<input id="lang" type="radio" class="processed" name="localization"' .  $checked . '>'
+                . '<label class="fade p5px pointer" for="lang">'
+                    . '<img alt="' . $configHelper->getConfig('language') . '" class="lang-select" src="' . $website->getUrl() . 'system/images/flags/' . $configHelper->getConfig('language') . '.png" border="0">'
+                . '</label>';
+
+            foreach ($localization as $lang){
+                $checked = $this->localizationSection[1] === $lang ? 'checked' : '';
+                echo '<input id="lang-' . $lang . '" type="radio" class="processed" data-lang="' . $lang . '" name="localization"' .  $checked . '>'
+                     . '<label class="fade p5px pointer" for="lang-' . $lang . '">'
+                       . '<img alt="' . $lang . '" class="lang-select" src="' . $website->getUrl() . 'system/images/flags/' . $lang . '.png" border="0">'
+                     . '</label>';
+            }
+            echo '</div>';
+        }
+    } ?>
 	<?php if(isset($this->helpSection)){
         echo $this->toasterHelp($this->helpSection, $this->hashMap);
     } ?>
