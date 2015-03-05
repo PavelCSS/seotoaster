@@ -29,6 +29,7 @@ class Application_Form_Config extends Zend_Form
 	protected $_canonicalScheme;
     protected $_recaptchaPublicKey;
     protected $_recaptchaPrivateKey;
+    protected $_localization;
 
 	/**
 	 * Wether or not to include protected pages into the menus
@@ -485,6 +486,11 @@ class Application_Form_Config extends Zend_Form
             'timeout' => 1440
         ));
 
+        $this->addElement('hidden', 'localization', array(
+            'value' => $this->_localization,
+            'label' => 'Website localization',
+        ));
+
         $this->setElementDecorators(array('ViewHelper', 'Label'));
 	}
 
@@ -523,5 +529,18 @@ class Application_Form_Config extends Zend_Form
 	public function getCanonicalScheme()
     {
 		return $this->_canonicalScheme;
+	}
+
+	public function setLocalization($localization)
+    {
+		$this->_localization = $localization;
+        $this->getElement('localization')->setValue($this->_localization);
+
+        return $this;
+	}
+
+	public function getLocalization()
+    {
+		return $this->_localization;
 	}
 }

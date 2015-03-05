@@ -107,7 +107,8 @@ $(function(){
                 if(!response.error){
                     if(form.hasClass('_reload')){
                         if(typeof response.responseText.redirectTo!='undefined'){
-                            top.location.href = $('#website_url').val()+response.responseText.redirectTo;
+                            var localization = $('#localization-page').val().length ? $('#localization-page').val()+'/' : '';
+                            top.location.href = $('#website_url').val() + localization + response.responseText.redirectTo;
                             return;
                         }
                         top.location.reload();

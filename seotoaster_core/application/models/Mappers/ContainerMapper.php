@@ -12,6 +12,10 @@ class Application_Model_Mappers_ContainerMapper extends Application_Model_Mapper
 
 	protected $_model   = 'Application_Model_Models_Container';
 
+    public function setName($name){
+        $this->_dbTable->setName($name);
+    }
+
 	public function save($container) {
 		if(!$container instanceof Application_Model_Models_Container) {
 			throw new Exceptions_SeotoasterException('Given parameter should be and Application_Model_Models_Container instance');

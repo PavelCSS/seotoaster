@@ -50,11 +50,14 @@ abstract class Widgets_AbstractContent extends Widgets_Abstract
             $hint = 'edit '.($widgetName == 'content' ? '' : $widgetName).' content';
         }
 
+        $localization = isset($_COOKIE["localization"]) ? '/lang/' . $_COOKIE["localization"] : '';
+
         $containerId = ($this->_container !== null) ? $this->_container->getId() : null;
         if ($containerId) {
             return '<a class="tpopup generator-links" data-pwidth="'.$width.'" data-pheight="'.$height
                 .'" title="Click to '.$hint.'" href="javascript:;" data-url="'.$this->_toasterOptions['websiteUrl']
                 .'backend/backend_content/edit/id/'.$containerId.'/containerType/'.$this->_type
+                .$localization
                 .'"><img width="26" height="26" src="'.$this->_toasterOptions['websiteUrl'].'system/images/'
                 .$controlIcon.'" alt="'.$hint.'" /></a>';
         }
@@ -62,7 +65,8 @@ abstract class Widgets_AbstractContent extends Widgets_Abstract
         return '<a class="tpopup generator-links" data-pwidth="'.$width.'" data-pheight="'.$height.'" title="Click to '
             .$hint.'" href="javascript:;" data-url="'.$this->_toasterOptions['websiteUrl']
             .'backend/backend_content/add/containerType/'.$this->_type.'/containerName/'.$this->_name.'/pageId/'
-            .$this->_toasterOptions['id'].'"><img width="26" height="26" src="'.$this->_toasterOptions['websiteUrl']
+            .$this->_toasterOptions['id']
+            .$localization.'"><img width="26" height="26" src="'.$this->_toasterOptions['websiteUrl']
             .'system/images/'.$controlIcon.'" alt="'.$hint.'" /></a>';
     }
 

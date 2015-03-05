@@ -2,10 +2,13 @@
 
 class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
 
-	protected $_name = 'page';
+	protected $_name         = 'page';
 
-    protected $_langs = ['en'];
-    protected $_lang = null;
+    protected $_localization = null;
+
+    public function setName($name){
+        $this->_name = $name;
+    }
 
 	protected $_referenceMap = array(
 		'Template' => array(
@@ -25,17 +28,16 @@ class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
 	);
 
     public function fetchAllMenu($menuType, $fetchSysPages = false) {
-        $pageName = $this->_lang ? 'page_'.$this->_lang : 'page';
         $where    = $this->getAdapter()->quoteInto("show_in_menu = '?'", $menuType);
         $sysWhere = $this->getAdapter()->quoteInto("system = '?'", intval($fetchSysPages));
         $select   = $this->getAdapter()->select()
-            ->from($pageName, array('id', 'parentId' => 'parent_id', 'protected', 'external_link_status', 'external_link'))
+            ->from($this->_name, array('id', 'parentId' => 'parent_id', 'protected', 'external_link_status', 'external_link'))
             ->joinLeft('optimized', 'page_id = id', null)
             ->columns(array(
-                'url'          => new Zend_Db_Expr('COALESCE(optimized.url, ' . $pageName. '.url)'),
-                'h1'           => new Zend_Db_Expr('COALESCE(optimized.h1, ' . $pageName. '.h1)'),
-                'navName'      => new Zend_Db_Expr('COALESCE(optimized.nav_name, ' . $pageName. '.nav_name)'),
-                'teaser'       => new Zend_Db_Expr('COALESCE(optimized.teaser_text, ' . $pageName. '.teaser_text)'),
+                'url'          => new Zend_Db_Expr('COALESCE(optimized.url, ' . $this->_name . '.url)'),
+                'h1'           => new Zend_Db_Expr('COALESCE(optimized.h1, ' . $this->_name . '.h1)'),
+                'navName'      => new Zend_Db_Expr('COALESCE(optimized.nav_name, ' . $this->_name . '.nav_name)'),
+                'teaser'       => new Zend_Db_Expr('COALESCE(optimized.teaser_text, ' . $this->_name . '.teaser_text)'),
                 'optimized'    => new Zend_Db_Expr('COALESCE(optimized.url, optimized.h1, optimized.header_title, optimized.nav_name, optimized.targeted_key_phrase, optimized.meta_description, optimized.meta_keywords, optimized.teaser_text, NULL)')
             ))
             ->where($sysWhere)
@@ -44,7 +46,7 @@ class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
 
 	    if ($menuType === Application_Model_Models_Page::IN_MAINMENU){
             $subSelect = $this->getAdapter()->select()
-                ->distinct()->from('page', 'id')
+                ->distinct()->from($this->_name, 'id')
                 ->where("parent_id = '?'", Application_Model_Models_Page::IDCATEGORY_CATEGORY)
                 ->where($sysWhere)
                 ->where($where)->__toString();
@@ -98,27 +100,22 @@ class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
     }
 
     public function findByUrl($pageUrl = Helpers_Action_Website::DEFAULT_PAGE) {
-        $pageUrlLang = explode('/', $pageUrl);
-        if(!empty($pageUrlLang[0]) && in_array($pageUrlLang[0], $this->_langs, true)) {
-            $this->_lang = $pageUrlLang[0];
-            unset($pageUrlLang[0]);
-            $pageUrl = implode('/', @$pageUrlLang);
+        if (isset($_COOKIE["localization"])) {
+            $this->setName('page_' . $_COOKIE["localization"]);
+            $this->_localization = '_'. $_COOKIE["localization"];
         }
 
-        $pageName = $this->_lang ? 'page_'.$this->_lang : 'page';
+        $where   = $this->getAdapter()->quoteInto('page' . $this->_localization . '.url = ?', $pageUrl);
+        $orWhere = $this->getAdapter()->quoteInto('optimized.url = ?', $pageUrl);
+        $select  = $this->_getOptimizedSelect(false, array('id', 'parent_id', 'template_id', 'last_update', 'silo_id', 'protected', 'system', 'news'));
 
-        $where       = $this->getAdapter()->quoteInto($pageName . '.url = ?', $pageUrl);
-        $orWhere     = $this->getAdapter()->quoteInto('optimized.url = ?', $pageUrl);
-        $select      = $this->_getOptimizedSelect(false, array('id', 'parent_id', 'template_id', 'last_update', 'silo_id', 'protected', 'system', 'news'));
-
-        $select->join('template', $pageName . '.template_id=template.name', null)
+        $select->join('template', 'page' . $this->_localization . '.template_id=template.name', null)
             ->columns(array(
                 'content' => 'template.content'
             ))
             ->where($where)
             ->orWhere($orWhere);
 
-        $row = $select->assemble();
         $row = $this->getAdapter()->fetchRow($select);
 
         if(!$row || !is_array($row) || !isset($row['id']) || ($row['id'] === null) || ($pageUrl !== Helpers_Action_Website::DEFAULT_PAGE && $pageUrl !== $row['url'])) {
@@ -126,8 +123,7 @@ class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
         }
 
         // select containers for the current page (including static)
-        $containerName = $this->_lang ? 'container_'.$this->_lang : 'container';
-        $select = $this->getAdapter()->select()->from($containerName, array(
+        $select = $this->getAdapter()->select()->from('container' . $this->_localization, array(
             'uniqHash' => new Zend_Db_Expr("MD5(CONCAT_WS('-',`name`, COALESCE(`page_id`, 0), `container_type`))"),
             'id',
             'name',
@@ -146,8 +142,7 @@ class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
     public function fetchAllByContent($content, $originalsOnly) {
         $where  = $this->getAdapter()->quoteInto('content LIKE ?', '%' . $content . '%');
         $select = $this->_getOptimizedSelect($originalsOnly);
-        $pageName = $this->_lang ? 'page_'.$this->_lang : 'page';
-        $select->join('container', 'container.page_id=' . $pageName. '.id', array())->where($where);
+        $select->join('container', 'container.page_id=' . $this->_name . '.id', array())->where($where);
         return $this->getAdapter()->fetchAll($select);
     }
 
@@ -178,34 +173,33 @@ class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
         if(empty($pageFields)) {
             $pageFields = array('id', 'template_id', 'parent_id', 'last_update', 'is_404page', 'show_in_menu', 'order', 'weight', 'silo_id', 'protected', 'system', 'draft', 'publish_at', 'news', 'err_login_landing', 'mem_landing', 'signup_landing', 'preview_image', 'external_link_status', 'external_link');
         }
-        $pageName = $this->_lang ? 'page_'.$this->_lang : 'page';
         $select = $this->getAdapter()->select();
         if($originalsOnly) {
             $pageFields = array_merge(array(
-                'url'                 => $pageName. '.url',
-                'h1'                  => $pageName. '.h1',
-                'header_title'        => $pageName. '.header_title',
-                'nav_name'            => $pageName. '.nav_name',
-                'targeted_key_phrase' => $pageName. '.targeted_key_phrase',
-                'meta_description'    => $pageName. '.meta_description',
-                'meta_keywords'       => $pageName. '.meta_keywords',
-                'teaser_text'         => $pageName. '.teaser_text',
+                'url'                 => $this->_name . '.url',
+                'h1'                  => $this->_name . '.h1',
+                'header_title'        => $this->_name . '.header_title',
+                'nav_name'            => $this->_name . '.nav_name',
+                'targeted_key_phrase' => $this->_name . '.targeted_key_phrase',
+                'meta_description'    => $this->_name . '.meta_description',
+                'meta_keywords'       => $this->_name . '.meta_keywords',
+                'teaser_text'         => $this->_name . '.teaser_text',
                 'optimized'           => 0
             ), $pageFields);
         }
 
-        $select->from($pageName, $pageFields);
+        $select->from($this->_name, $pageFields);
         return ($originalsOnly) ? $select : $select
             ->joinLeft('optimized', 'page_id=id', null)
             ->columns(array(
-                'url'                 => new Zend_Db_Expr('COALESCE(optimized.url, ' . $pageName. '.url)'),
-                'h1'                  => new Zend_Db_Expr('COALESCE(optimized.h1, ' . $pageName. '.h1)'),
-                'header_title'        => new Zend_Db_Expr('COALESCE(optimized.header_title, ' . $pageName. '.header_title)'),
-                'nav_name'            => new Zend_Db_Expr('COALESCE(optimized.nav_name, ' . $pageName. '.nav_name)'),
-                'targeted_key_phrase' => new Zend_Db_Expr('COALESCE(optimized.targeted_key_phrase, ' . $pageName. '.targeted_key_phrase)'),
-                'meta_description'    => new Zend_Db_Expr('COALESCE(optimized.meta_description, ' . $pageName. '.meta_description)'),
-                'meta_keywords'       => new Zend_Db_Expr('COALESCE(optimized.meta_keywords, ' . $pageName. '.meta_keywords)'),
-                'teaser_text'         => new Zend_Db_Expr('COALESCE(optimized.teaser_text, ' . $pageName. '.teaser_text)'),
+                'url'                 => new Zend_Db_Expr('COALESCE(optimized.url, ' . $this->_name . '.url)'),
+                'h1'                  => new Zend_Db_Expr('COALESCE(optimized.h1, ' . $this->_name . '.h1)'),
+                'header_title'        => new Zend_Db_Expr('COALESCE(optimized.header_title, ' . $this->_name . '.header_title)'),
+                'nav_name'            => new Zend_Db_Expr('COALESCE(optimized.nav_name, ' . $this->_name . '.nav_name)'),
+                'targeted_key_phrase' => new Zend_Db_Expr('COALESCE(optimized.targeted_key_phrase, ' . $this->_name . '.targeted_key_phrase)'),
+                'meta_description'    => new Zend_Db_Expr('COALESCE(optimized.meta_description, ' . $this->_name . '.meta_description)'),
+                'meta_keywords'       => new Zend_Db_Expr('COALESCE(optimized.meta_keywords, ' . $this->_name . '.meta_keywords)'),
+                'teaser_text'         => new Zend_Db_Expr('COALESCE(optimized.teaser_text, ' . $this->_name . '.teaser_text)'),
                 'optimized'         => new Zend_Db_Expr('COALESCE(optimized.url, optimized.h1, optimized.header_title, optimized.nav_name, optimized.targeted_key_phrase, optimized.meta_description, optimized.meta_keywords, optimized.teaser_text, NULL)')
             ));
     }

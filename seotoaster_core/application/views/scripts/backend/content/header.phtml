@@ -1,7 +1,14 @@
 <div class="seotoaster container">
-	<?php echo $this->partial('admin' . DIRECTORY_SEPARATOR . '_header.phtml', array('innerHeaderHtml' => 'Edit header', 'helpSection' => $this->helpSection)); ?>
+	<?php echo $this->partial(
+        'admin' . DIRECTORY_SEPARATOR . '_header.phtml',
+        array(
+            'innerHeaderHtml'     => 'Edit header',
+            'helpSection'         => $this->helpSection,
+            'localizationSection' => array(true, $this->localizationSection)
+        )
+    ); ?>
     <?php
-        $this->contentForm->setAction($this->url());
-        echo $this->contentForm;
+    $this->contentForm->setAction($this->url());
+    echo $this->contentForm;
     ?>
 </div>
