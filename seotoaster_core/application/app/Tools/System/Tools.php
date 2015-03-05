@@ -383,10 +383,15 @@ class Tools_System_Tools {
         return preg_replace("/[^A-Za-z0-9 ]/", '&nbsp;', $content);
     }
 
-    private static function getAllowedTables() {
+    private static function getAllowedTables($pluginName) {
         $method = self::LOCALIZATION_METHOD;
-        $tableNames = self::$_systemTables;
-        $enabledPlugins = Tools_Plugins_Tools::getEnabledPlugins(true);
+        if(!isset($pluginName)){
+            $tableNames = self::$_systemTables;
+            $enabledPlugins = Tools_Plugins_Tools::getEnabledPlugins(true);
+        }else{
+            $tableNames = array();
+            $enabledPlugins = array($pluginName);
+        }
         if(!empty ($enabledPlugins)) {
             foreach ($enabledPlugins as $pluginName) {
                 if(method_exists($pluginName, $method)) {
@@ -398,8 +403,8 @@ class Tools_System_Tools {
         return $tableNames;
     }
 
-    public static function cloneLocalizationDbTable() {
-        $tableNames   = self::getAllowedTables();
+    public static function cloneLocalizationDbTable($pluginName) {
+        $tableNames   = self::getAllowedTables($pluginName);
         $dbAdapter    = Zend_Registry::get('dbAdapter');
         $config       = Application_Model_Mappers_ConfigMapper::getInstance()->getConfig();
 
@@ -411,21 +416,25 @@ class Tools_System_Tools {
 
         foreach($tableNames as $tableName){
             foreach ($localization as $lang) {
-                $dbAdapter->query('CREATE TABLE IF NOT EXISTS `' . $tableName . '_' . $lang . '` AS SELECT * FROM ' . $tableName . '`');
+               $dbAdapter->query(
+                   'CREATE TABLE IF NOT EXISTS `' . $tableName . '_' . $lang . '` LIKE `' . $tableName . '`;
+                    INSERT `' . $tableName . '_' . $lang . '` SELECT * FROM `' . $tableName . '`;'
+               );
             }
         }
     }
 
-    public static function removeLocalizationDbTable() {
-        $tableNames      = self::getAllowedTables();
+    public static function removeLocalizationDbTable($pluginName) {
+        $tableNames      = self::getAllowedTables($pluginName);
         $dbAdapter       = Zend_Registry::get('dbAdapter');
-        $config          = Application_Model_Mappers_ConfigMapper::getInstance()->getConfig();
-        $localization    = explode(',', $config['localization']);
         $language        = new Helpers_Action_Language;
         $localizationAll = $language->getLanguages(false);
-
-        foreach ($localization as $lang) {
-            unset($localizationAll[$lang]);
+        if(!isset($pluginName)){
+            $config       = Application_Model_Mappers_ConfigMapper::getInstance()->getConfig();
+            $localization = explode(',', $config['localization']);
+            foreach ($localization as $lang) {
+                unset($localizationAll[$lang]);
+            }
         }
 
         foreach($tableNames as $tableName){
