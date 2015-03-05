@@ -1,11 +1,13 @@
 <script type="text/javascript">
     $(function() {
-        $.get('<?php echo $this->websiteUrl?>api/toaster/containers/', {
+        var params = JSON.parse('<?php echo $this->params; ?>'),
+            data   = {
                 pid  : '<?php echo $this->pageId;?>',
                 name : '<?php echo $this->name;?>',
                 type : '<?php echo $this->type;?>',
                 co   : 1
-            },
+            };
+        $.get('<?php echo $this->websiteUrl?>api/toaster/containers/', $.extend(data, params),
             function(resp) {
                 var content = $('div.<?php echo md5($this->name . $this->type); ?>');
                 content.empty();
@@ -15,4 +17,6 @@
         }, 'json');
     });
 </script>
-<div class="ajax-content <?php echo md5($this->name . $this->type); ?>"><img src="<?php echo $this->websiteUrl; ?>system/images/ajax-loader-small.gif"></div>
+<div class="ajax-content <?php echo md5($this->name.$this->type).($this->isPublished ? '' : ' unpublished'); ?>">
+    <img src="<?php echo $this->websiteUrl; ?>system/images/ajax-loader-small.gif" style="margin: 20px auto; display: block;">
+</div>

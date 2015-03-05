@@ -1,29 +1,48 @@
 <form action="javascript:;" method="post" data-name="featured" id="featured-widget-form" class="wmc-block">
-	<?php echo $this->formLabel('featured-item-type', $this->translate('Type'), array('class' => 'nopad grid_6')); ?>
-	<?php echo $this->formSelect('featuredItemType', 'Group of pages', array('id' => 'featured-item-type', 'class' => 'nopad grid_6'), array(Widgets_Featured_Featured::FEATURED_TYPE_AREA => 'Group of pages', Widgets_Featured_Featured::FEATURED_TYPE_PAGE => 'List just one page')); ?>
-	<?php echo $this->formSelect('featuredAreaItem', null, array('id' => 'featured-area-item', 'class' => 'nopad grid_12 validate')); ?>
-	<?php echo $this->formLabel('featured-item-maxres', $this->translate('Max. result'), array('class' => 'nopad grid_6 max-res-row')); ?>
-	<?php echo $this->formText('featuredItemMaxres', Widgets_Featured_Featured::AREA_PAGES_COUNT, array('id' => 'featured-item-maxres', 'class' => 'nopad grid_6 max-res-row')); ?>
-	<?php echo $this->formLabel('featured-item-maxchars', $this->translate('Max. chars.'), array('class' => 'nopad grid_6')); ?>
-	<?php echo $this->formText('featuredItemMaxchars', Widgets_Featured_Featured::AREA_DESC_LENGTH, array('id' => 'featured-item-maxchars', 'class' => 'nopad grid_6')); ?>
-	<?php echo $this->formLabel('use-image', $this->translate('Use image'), array('class' => 'nopad grid_6')); ?>
-	<div class="nopad grid_6">
-		<?php echo $this->formCheckbox('useImage', 'img', array('id' => 'use-image')); ?>
-		<?php echo $this->formLabel('use-image-cropped', $this->translate('Cropped'), array('style' => 'display:none;', 'class' => 'cropped-img')); ?>
-		<?php echo $this->formCheckbox('cropped', 'imgc', array('id' => 'use-image-cropped', 'style' => 'display:none;', 'class' => 'cropped-img')); ?>
-	</div>
-	<?php echo $this->formLabel('featured-random', $this->translate('Random'), array('class' => 'nopad grid_6 max-res-row')); ?>
-	<div class="nopad grid_6">
-		<?php echo $this->formCheckbox('random', null, array('id' => 'random', 'class' => 'max-res-row')); ?>
-	</div>
-	<div class="grid_12 nopad">
-		<?php echo $this->formSubmit('applyWidget', $this->translate('Apply'), array('class' => 'apply-widget')); ?>
-	</div>
+    <p>
+        <?php echo $this->formLabel('featured-item-type', $this->translate('Type'), array('class' => 'grid_5 alpha')); ?>
+        <?php echo $this->formSelect('featuredItemType', 'Group of pages', array('id' => 'featured-item-type', 'class' => 'grid_7 alpha omega small'), array(Widgets_Featured_Featured::FEATURED_TYPE_AREA => 'Group of pages', Widgets_Featured_Featured::FEATURED_TYPE_PAGE => 'List just one page')); ?>
+    </p>
+    <p class="mt5px">
+        <?php echo $this->formSelect('featuredAreaItem', null, array('id' => 'featured-area-item', 'class' => 'grid_12 alpha omega small validate')); ?>
+    </p>
+    <p class="mt5px">
+        <?php echo $this->formLabel('featured-item-maxres', $this->translate('Max. result'), array('class' => 'grid_5 alpha max-res-row')); ?>
+        <?php echo $this->formText('featuredItemMaxres', Widgets_Featured_Featured::AREA_PAGES_COUNT, array('id' => 'featured-item-maxres', 'class' => 'grid_7 alpha omega small max-res-row')); ?>
+    </p>
+    <p class="mt5px maxchars">
+        <?php echo $this->formLabel('featured-item-maxchars', $this->translate('Max. chars.'), array('class' => 'grid_5 alpha')); ?>
+        <?php echo $this->formText('featuredItemMaxchars', Widgets_Featured_Featured::AREA_DESC_LENGTH, array('id' => 'featured-item-maxchars', 'class' => 'grid_7 alpha omega small')); ?>
+    </p>
+    <p class="mt5px">
+	    <label class="grid_6 alpha omega pointer">
+            <span class="grid_10 alpha omega"><?php echo $this->translate('Use image'); ?></span>
+		    <?php echo $this->formCheckbox('useImage', 'img', array('id' => 'use-image')); ?>
+        </label>
+	    <label class="cropped-img hide grid_6 omega pointer">
+            <?php echo $this->translate('Cropped'); ?>
+            <?php echo $this->formCheckbox('cropped', 'imgc', array('id' => 'use-image-cropped', 'class' => 'crop')); ?>
+        </label>
+	</p>
+    <div class="mt5px crop-size hide">
+        <p class="clearfix">
+            <label class="mt0-25em grid_5 alpha"><?php echo $this->translate('Size'); ?></label>
+            <?php echo $this->formText('galWidth', null, array('class' => 'gal-width grid_3 alpha omega small', 'placeholder' => $this->translate('Width'))); ?>
+            <span class="mt0-25em grid_1 alpha omega text-center">X</span>
+            <?php echo $this->formText('galHeight', null, array('class' => 'gal-height grid_3 alpha omega small', 'placeholder' => $this->translate('Height'))); ?>
+        </p>
+    </div>
+    <p class="mt5px">
+        <label class="max-res-row grid_6 alpha omega suffix_6 pointer">
+            <span class="grid_10 alpha omega"><?php echo $this->translate('Random'); ?></span>
+            <?php echo $this->formCheckbox('random', null, array('id' => 'random', 'class' => 'allowzero')); ?>
+        </label>
+	</p>
+	<?php echo $this->formSubmit('applyWidgetFeatured', 'Apply', array('class' => 'btn small')); ?>
 </form>
 
 <script type="text/javascript">
     $(function() {
-
 	    var featured = {
 		    _TYPE_PAGE: 'page',
 		    _TYPE_AREA: 'area',
@@ -65,11 +84,66 @@
 		    featured.setType($(this).val()).load();
 		    $('.max-res-row').fadeToggle();
         }).on('change', '#featured-area-item', function() {
-		    featured.itemsHolder.removeClass('red-border');
-	    }).on('click', '#use-image', function() {
-		    $('.cropped-img').fadeToggle();
+		    featured.itemsHolder.removeClass('error');
 	    });
 	    featured.setType(featured._TYPE_AREA).load();
-    });
 
+        // Generation widget from form options
+        $(document).on('click', '#applyWidgetFeatured', function() {
+            var error      = false,
+                widgetForm = $(this).closest('form'),
+                widgetHtml = '{$' + widgetForm.data('name'),
+                cropOption = ':imgc';
+
+            widgetForm.find(':input:visible, label:visible>:checkbox').not('[type=hidden], [type=submit]').each(function () {
+                if ($(this).hasClass('crop') && $(this).prop('checked')) {
+                    widgetHtml = widgetHtml.replace(':img', '');
+                    return;
+                }
+
+                if ($(this).hasClass('gal-width')) {
+                    if ($(this).val()) {
+                        cropOption = cropOption+'-'+$(this).val();
+                        return;
+                    }
+                    else {
+                        return;
+                    }
+                }
+
+                if ($(this).hasClass('gal-height')) {
+                    if ($(this).val() && cropOption != ':imgc') {
+                        widgetHtml += cropOption+'x'+$(this).val();
+                        return;
+                    }
+                    else {
+                        widgetHtml += cropOption
+                        return;
+                    }
+                }
+
+                if ($(this).attr('type') == 'checkbox' && !$(this).prop('checked')) {
+                    if ($(this).hasClass('allowzero')) {
+                        widgetHtml += ':0';
+                    }
+                    return;
+                }
+
+                if ($(this).hasClass('validate')) {
+                    if (!$(this).val() || $(this).val() == 0) {
+                        $(this).addClass('error');
+                        error = true;
+                    }
+                }
+
+                if (!error) {
+                    widgetHtml += ':' + $(this).val();
+                }
+            });
+            if (!error) {
+                widgetHtml += '}';
+                tinymce.activeEditor.execCommand('mceInsertContent', false, widgetHtml);
+            }
+        });
+    });
 </script>

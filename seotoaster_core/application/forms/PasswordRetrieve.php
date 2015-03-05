@@ -11,6 +11,7 @@ class Application_Form_PasswordRetrieve extends Zend_Form {
 
 		$this->setAttribs(array(
 			'id'     => 'password-retrive',
+//			'class'  => 'grid_12 mt20px mb20px',
 			'method' => Zend_Form::METHOD_POST
 		));
 
@@ -34,27 +35,24 @@ class Application_Form_PasswordRetrieve extends Zend_Form {
 			),
 		)));
 
-		$this->addDisplayGroups(array(
-			'main' => array('email')
-		));
-
-		$main = $this->getDisplayGroup('main')
-			->setDecorators(array(
-				'FormElements',
-		        'Fieldset',
-		));
-
-		$this->setElementDecorators(array(
-			'ViewHelper',
-			'Label',
-			array('HtmlTag', array('tag' => 'div'))
-		));
-
-		$this->addElement(new Zend_Form_Element_Submit(array(
+        $this->addElement('submit', 'submit', array(
 			'name'   => 'retrieve',
 			'ignore' => true,
-			'label'  => 'Retrieve'
-		)));
+			'label'  => 'Retrieve',
+			'class'  => 'btn'
+		));
+
+        $this->setElementDecorators(array(
+            'ViewHelper',
+            'Label',
+            array('HtmlTag', array('tag' => 'p'))
+        ));
+
+        $this->getElement('submit')->removeDecorator('DtDdWrapper');
+        $this->getElement('submit')->removeDecorator('Label');
+        $this->getElement('submit')->removeDecorator('HtmlTag');
+        $this->removeDecorator('DtDdWrapper');
+        $this->removeDecorator('DlWrapper');
 	}
 
 }

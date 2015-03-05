@@ -1,0 +1,106 @@
+.ui-progressbar{
+    position    : relative;
+    height      : @progressbar-size;
+    border      : 1px solid @progressbar-border-color;
+    background  : @progressbar-bg;
+    text-align  : left;
+    line-height : @progressbar-size;
+
+    .ui-progressbar-value{
+        height     : 100%;
+        background : @progressbar-value;
+    }
+
+    .label{
+        position       : absolute;
+        top            : 0;
+        left           : 0.5em;
+        bottom         : 0;
+        z-index        : 5;
+        text-transform : uppercase;
+        font-size      : @font-size-small;
+        color          : rgba(0, 0, 0, 0.7);
+        font-weight    : bold;
+
+        b{
+            &:after{
+                content : '%';
+            }
+        }
+    }
+
+    // Alternate progressbar
+    // --------------------------------------------------
+    &.success when (@progressbar-color-success = true) and (@progressbar-colors = true){
+        background   : @state-success-bg;
+        border-color : @state-success-border;
+
+        .ui-progressbar-value{
+            background : @state-success-color;
+        }
+    }
+    &.warning when (@progressbar-color-warning = true) and (@progressbar-colors = true){
+        background   : @state-warning-bg;
+        border-color : @state-warning-border;
+
+        .ui-progressbar-value{
+            background : @state-warning-color;
+        }
+    }
+    &.error when (@progressbar-color-error = true) and (@progressbar-colors = true){
+        background   : @state-error-bg;
+        border-color : @state-error-border;
+
+        .ui-progressbar-value{
+            background : @state-error-color;
+        }
+    }
+    &.info when (@progressbar-color-info = true) and (@progressbar-colors = true){
+        background   : @state-info-bg;
+        border-color : @state-info-border;
+
+        .ui-progressbar-value{
+            background : @state-info-color;
+        }
+    }
+}
+
+[id*="-filelist"]{
+    .ui-widget{
+        .ui-state-highlight, .ui-state-error{
+            overflow      : hidden;
+            margin-bottom : 0.2em;
+            font-size     : @font-size-small;
+            padding       : 0 @padding-small-vertical;
+            height        : @progressbar-size;
+            line-height   : @progressbar-size;
+
+            p{
+                margin      : 0;
+                position    : relative;
+                z-index     : 5;
+                max-width   : 88%;
+                color       : rgba(0, 0, 0, 0.7);
+                height      : @progressbar-size - 2;
+                line-height : @progressbar-size - 2;
+                .inline-block;
+                .text-overflow;
+
+                &+.ui-progressbar{
+                    margin : -@progressbar-size -@padding-small-vertical 0;
+                }
+            }
+
+            .ui-icon{
+                .icon-size(@font-size-base);
+                float      : right;
+                margin-top : 2px;
+                color      : @brand-info;
+            }
+
+            .ui-icon-alert{
+                color : @brand-error;
+            }
+        }
+    }
+}

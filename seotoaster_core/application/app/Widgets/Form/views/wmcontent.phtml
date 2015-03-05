@@ -1,15 +1,30 @@
 <form action="javascript:;" method="post" data-name="form" id="forms-widget-form" class="wmc-block">
-	<?php echo $this->formLabel('forms-newname', $this->translate('Form name'), array('class' => 'nopad grid_6')); ?>
-	<?php echo $this->formText('formsNewname', '', array('id' => 'forms-newname', 'class' => 'nopad grid_6')); ?>
-	<?php echo $this->formLabel('forms-existing', $this->translate('Select a form'), array('class' => 'nopad grid_6')); ?>
-	<?php echo $this->formSelect('formsExisting', null, array('id' => 'forms-existing', 'class' => 'nopad grid_6')); ?>
-	<?php echo $this->formLabel('forms-captcha', $this->translate('recaptcha'), array('class' => 'nopad grid_6')); ?>
-	<div class="nopad grid_6">
-		<?php echo $this->formCheckbox('formsCaptcha', null, array('id' => 'forms-captcha')); ?>
-	</div>
-	<div class="grid_12 nopad">
-		<?php echo $this->formSubmit('applyWidget', $this->translate('Apply'), array('class' => 'apply-widget-forms')); ?>
-	</div>
+    <p>
+        <?php echo $this->formLabel('forms-newname', $this->translate('Form name'), array('class' => 'grid_5 alpha')); ?>
+        <?php echo $this->formText('formsNewname', '', array('id' => 'forms-newname', 'class' => 'grid_7 alpha omega small')); ?>
+    </p>
+    <p class="mt5px">
+        <?php echo $this->formLabel('forms-existing', $this->translate('Select a form'), array('class' => 'grid_5 alpha')); ?>
+        <?php echo $this->formSelect('formsExisting', null, array('id' => 'forms-existing', 'class' => 'grid_7 alpha omega small')); ?>
+    </p>
+    <p class="mt5px">
+        <label class="pointer">
+            <span class="grid_5 alpha"><?php echo $this->translate('Use recaptcha'); ?></span>
+            <?php echo $this->formCheckbox('formsCaptcha', null, array('id' => 'forms-captcha')); ?>
+        </label>
+    </p>
+    <p>
+        <label class="pointer hide">
+            <span class="grid_5 alpha"><?php echo $this->translate('Recaptcha style'); ?></span>
+            <?php echo $this->formSelect('formsCaptchastyle', null, array('id' => 'form-captcha-style', 'class' => 'grid_7 alpha omega small'),
+                array('custom' => 'custom', 'red' => 'red', 'white' => 'white'));?>
+        </label>
+    </p>
+    <p class="mt5px">
+        <?php echo $this->formLabel('forms-submitlabel', $this->translate('Submit label'), array('class' => 'grid_5 alpha')); ?>
+        <?php echo $this->formText('formsSubmitlabel', '', array('id' => 'forms-submit-label', 'class' => 'grid_7 alpha omega small')); ?>
+    </p>
+    <?php echo $this->formSubmit('applyWidget', 'Apply', array('class' => 'apply-widget-forms btn small')); ?>
 </form>
 <script type="text/javascript">
 	$(function() {
@@ -23,21 +38,42 @@
 			formsSelect.prepend('<option value="0" selected="selected"><?php echo $this->translate('Select a form'); ?></option>')
 		});
 
+        $("#forms-captcha").change(function(){
+            if(this.checked){
+                $("#form-captcha-style").closest('label.pointer').fadeIn('slow')
+            } else {
+                $("#form-captcha-style").closest('label.pointer').fadeOut('slow');
+            }
+        })
+
 		$(document).on('click', '.apply-widget-forms', function() {
-			var widgetForm = $(this).closest('form');
+            var recaptchaStyle = "";
+            var widgetForm = $(this).closest('form');
 			var widgetHtml = '{$' + widgetForm.data('name');
+
 			if($('#forms-newname').val().trim() != '') {
 				widgetHtml += ':' + $('#forms-newname').val()
 			} else if($('#forms-existing').val() != 0) {
 				widgetHtml += ':' + $('#forms-existing').val();
 			} else {
-				$('#forms-existing').addClass('red-border');
-				$('#forms-newname').addClass('red-border');
+                $('#forms-existing').addClass('error');
+                $('#forms-newname').addClass('error');
 				widgetHtml = '';
 			}
+
+                recaptchaStyle = $("#form-captcha-style option:selected").text();
+
 			if(widgetHtml != '') {
-				widgetHtml += ($('#forms-captcha').prop('checked') ? ':recaptcha}' : '}');
-				$('textarea.tinymce').tinymce().execCommand('mceInsertContent',false, widgetHtml);
+                if($('#forms-captcha').prop('checked')){
+                    widgetHtml += ':recaptcha:' + recaptchaStyle ;
+                }
+
+                if($("#forms-submit-label").val().length != 0){
+                    widgetHtml += ":" + $("#forms-submit-label").val() + "}";
+                } else{
+                    widgetHtml += "}";
+                }
+				tinymce.activeEditor.execCommand('mceInsertContent',false, widgetHtml);
 			}
 		});
 	});

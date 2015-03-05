@@ -17,6 +17,10 @@ class Tools_System_Tools {
 
 	const PLACEHOLDER_SYSTEM_VERSION    = 'sysverHolder';
 
+    const RECAPTCHA_PUBLIC_KEY = 'recaptchaPublicKey';
+
+    const RECAPTCHA_PRIVATE_KEY = 'recaptchaPrivateKey';
+
 	public static function getUrlPath($url) {
 		$parsedUrl = self::_proccessUrl($url);
 		return (isset($parsedUrl['path'])) ? trim($parsedUrl['path'], '/')  . (isset($parsedUrl['query']) ? '?' . $parsedUrl['query'] : '') : '';
@@ -137,11 +141,22 @@ class Tools_System_Tools {
      * @return recaptcha code
      */
     
-    public static function generateRecaptcha($captchaTheme = 'red') {
+    public static function generateRecaptcha($captchaTheme = 'red', $captchaId = null) {
         $websiteConfig = Zend_Controller_Action_HelperBroker::getExistingHelper('config')->getConfig();
-        if(!empty($websiteConfig) && isset($websiteConfig['recapthaPublicKey']) && $websiteConfig['recapthaPublicKey'] != '' && isset($websiteConfig['recapthaPrivateKey']) && $websiteConfig['recapthaPrivateKey'] != ''){
+        if (!empty($websiteConfig) && !empty($websiteConfig[self::RECAPTCHA_PUBLIC_KEY]) && !empty($websiteConfig[self::RECAPTCHA_PRIVATE_KEY])) {
             $options = array('theme' => $captchaTheme);
-            $recaptcha = new Zend_Service_ReCaptcha($websiteConfig['recapthaPublicKey'], $websiteConfig['recapthaPrivateKey'], null, $options);
+            $params = null;
+            if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == "on") {
+                $params = array(
+                    'ssl' => Zend_Controller_Front::getInstance()->getRequest()->isSecure(),
+                    'error' => null,
+                    'xhtml' => false
+                );
+            }
+            if (null !== $captchaId) {
+                $options['custom_theme_widget'] = $captchaId;
+            }
+            $recaptcha = new Zend_Service_ReCaptcha($websiteConfig[self::RECAPTCHA_PUBLIC_KEY], $websiteConfig[self::RECAPTCHA_PRIVATE_KEY], $params, $options);
             return $recaptcha->getHTML();
         }
         return false;
@@ -281,5 +296,83 @@ class Tools_System_Tools {
         finfo_close($finfo);
         return $mime;
     }
-}
 
+    /**
+     * Detect version browser internet explorer.
+     *
+     * @return bool
+     */
+    public static function isBrowserIe($notBelowVersion = 9) {
+        $version = false;
+
+        if (isset($_SERVER['HTTP_USER_AGENT'])) {
+            $agent = $_SERVER['HTTP_USER_AGENT'];
+
+            if (preg_match('/MSIE/i', $agent) && !preg_match('/Opera/i', $agent)) {
+                $browser = 'MSIE';
+                $data    = array();
+
+                preg_match_all(
+                    '#(?<browser>Version|'.$browser.'|other)[/ ]+(?<version>[0-9.|a-zA-Z.]*)#',
+                    $agent,
+                    $data
+                );
+
+                if (isset($data['browser']) && count($data['browser']) != 1) {
+                    if (isset($data['version'][0]) && strripos($agent, 'Version') < strripos($agent, $browser)) {
+                        $version = $data['version'][0];
+                    }
+                    elseif (isset($data['version'][1])) {
+                        $version = $data['version'][1];
+                    }
+                }
+                elseif (isset($data['version'][0])) {
+                    $version = $data['version'][0];
+                }
+            }
+        }
+
+        return ($version && intval($version) < $notBelowVersion) ? false : true;
+    }
+
+    public static function getCountryPhoneCodesList($withCountryCode = true, $intersect = array()) {
+        $cache       = Zend_Controller_Action_HelperBroker::getStaticHelper('Cache');
+        $cachePrefix = strtolower(__CLASS__).'_';
+        $cacheId     = strtolower(__FUNCTION__) . '_' . (int)$withCountryCode . '_' . json_encode($intersect);
+        if (null === ($phoneCodes = $cache->load($cacheId, $cachePrefix))) {
+            $phoneCodes = Zend_Locale::getTranslationList('phoneToTerritory');
+            array_shift($phoneCodes);
+            if(!empty($intersect)) {
+                $phoneCodes = array_intersect_key($phoneCodes, array_flip($intersect));
+            }
+            array_walk($phoneCodes, function(&$item, $key) use($withCountryCode) {
+                    $item = ($withCountryCode) ? '+' . $item . ' ' . $key : '+' . $item;
+                });
+            $cache->save($cacheId, $phoneCodes, $cachePrefix, array(), Helpers_Action_Cache::CACHE_SHORT);
+        }
+        return $phoneCodes;
+
+    }
+
+    public static function getWebsiteCountryCode() {
+        $countryCode = 'US';
+        $plugins = Application_Model_Mappers_PluginMapper::getInstance()->findByName('shopping');
+        if(!empty($plugins) && $plugins->getStatus() === 'enabled') {
+            $storeCountry = Models_Mapper_ShoppingConfig::getInstance()->getConfigParam('country');
+            if(!empty($storeCountry)) {
+                return $storeCountry;
+            }
+        }
+        $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
+        $widcardCountry = $configHelper->getConfig('wicOrganizationCountry');
+        if(!empty($widcardCountry)) {
+            return $widcardCountry;
+        }
+        return $countryCode;
+    }
+
+    public static function makeSpace($content)
+    {
+        return preg_replace("/[^A-Za-z0-9 ]/", '&nbsp;', $content);
+    }
+}

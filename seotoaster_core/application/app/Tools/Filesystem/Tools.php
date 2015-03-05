@@ -7,7 +7,7 @@
  */
 class Tools_Filesystem_Tools {
 
-	private static $_excludedFiles = array('.svn', '.', '..', '.htaccess', 'concat.css');
+	private static $_excludedFiles = array('.svn', '.', '..', '.htaccess', 'concat.css', '.gitignore');
 
 	/**
 	 * Scan directory and get all files from it.
@@ -201,4 +201,41 @@ class Tools_Filesystem_Tools {
 
 		return false;
 	}
+
+    /**
+     * Check if directory is not empty
+     * @param $dirname Directory to check
+     * @return bool true if directory empty
+     * @throws Exceptions_SeotoasterException
+     */
+    public static function isEmptyDir($dirname){
+        $dirname = trim($dirname);
+        if ($dirname == '' || !is_dir($dirname)) {
+            throw new Exceptions_SeotoasterException('Wrong directory given: ' . $dirname);
+        }
+        $handle = opendir($dirname);
+        if ($handle) {
+            while (false !== ($entry = readdir($handle))) {
+                if (!in_array($entry, array('.', '..'))) {
+                    closedir($handle);
+                    return false;
+                }
+            }
+        } else {
+            throw new Exceptions_SeotoasterException('Can not open directory: ' . $dirname);
+        }
+        return true;
+    }
+
+    /**
+     * Returns the correct file path for windows
+     *
+     * @param string $path file path
+     *
+     * @return string clean path for Win file
+     */
+    public static function cleanWinPath($path){
+
+        return str_replace('\\', '/', trim($path));
+    }
 }

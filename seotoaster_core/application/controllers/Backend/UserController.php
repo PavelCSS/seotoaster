@@ -7,6 +7,19 @@
  */
 class Backend_UserController extends Zend_Controller_Action {
 
+    /**
+     * @var Helpers_Action_Session
+     */
+    private $_websiteHelper = null;
+    /**
+     * @var Zend_Db_Table
+     */
+    private $_zendDbTable;
+
+    private $_websiteUrl;
+
+    private $_session;
+
 	public function init() {
 		parent::init();
 		if(!Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_USERS)) {
@@ -18,6 +31,10 @@ class Backend_UserController extends Zend_Controller_Action {
 			'load'   => 'json'
 		))->initContext('json');
 		$this->view->websiteUrl = $this->_helper->website->getUrl();
+        $this->_websiteHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
+        $this->_websiteUrl = $this->_websiteHelper->getUrl();
+        $this->_zendDbTable = new Zend_Db_Table();
+        $this->_session = Zend_Controller_Action_HelperBroker::getStaticHelper('session');
 	}
 
 	public function manageAction() {
@@ -29,7 +46,17 @@ class Backend_UserController extends Zend_Controller_Action {
             if($userId) {
                 $userForm->setId($userId);
             }
-			if($userForm->isValid($this->getRequest()->getParams())) {
+
+            if (isset($this->_session->userSecureToken)) {
+                $userForm->getElement('secureToken')->removeValidator('Identical');
+                $userForm->getElement('secureToken')->addValidator(
+                    'Identical',
+                    false,
+                    array('token' => $this->_session->userSecureToken)
+                );
+            }
+
+            if($userForm->isValid($this->getRequest()->getParams())) {
 				$data       = $userForm->getValues();
 				$user       = new Application_Model_Models_User($data);
 				Application_Model_Mappers_UserMapper::getInstance()->save($user);
@@ -37,17 +64,81 @@ class Backend_UserController extends Zend_Controller_Action {
 				exit;
 			}
 			else {
-				$this->_helper->response->fail(Tools_Content_Tools::proccessFormMessagesIntoHtml($userForm->getMessages()));
+                $this->_helper->response->fail(Tools_Content_Tools::proccessFormMessages($userForm->getMessages()));
 				exit;
 			}
 		}
-        $this->view->helpSection = 'users';
-		$this->view->userForm    = $userForm;
-	}
 
-	public function listAction() {
-		$this->view->users     = Application_Model_Mappers_UserMapper::getInstance()->fetchAll();
-		$this->view->usersList = $this->view->render('backend/user/list.phtml');
+        if (!isset($this->_session->userSecureToken)) {
+            $userForm->getElement('secureToken')->initCsrfToken();
+            $secureToken = $userForm->getElement('secureToken')->getValue();
+            $this->_session->userSecureToken = $secureToken;
+        } else {
+            $secureToken = $this->_session->userSecureToken;
+        }
+
+        $this->view->secureToken = $secureToken;
+
+        $pnum = (int)filter_var($this->getParam('pnum'), FILTER_SANITIZE_NUMBER_INT);
+        $offset = 0;
+        if ($pnum) {
+            $offset = 10 * ($pnum - 1);
+        }
+
+        $select = $this->_zendDbTable->getAdapter()->select()->from('user');
+
+        $by = filter_var($this->getParam('by', 'last_login'), FILTER_SANITIZE_STRING);
+        $order = filter_var($this->getParam('order', 'desc'), FILTER_SANITIZE_STRING);
+        $searchKey = filter_var($this->getParam('key'), FILTER_SANITIZE_STRING);
+
+        if (!in_array($order, array('asc', 'desc'))) {
+            $order = 'desc';
+        }
+
+        $select = $select->order($by . ' ' . $order);
+
+        $paginatorOrderLink = '/by/' . $by . '/order/' . $order;
+        if (!empty($searchKey)) {
+            $select->where('email LIKE ?', '%'.$searchKey.'%')
+                ->orWhere('full_name LIKE ?', '%'.$searchKey.'%')
+                ->orWhere('role_id LIKE ?', '%'.$searchKey.'%')
+                ->orWhere('last_login LIKE ?', '%'. date("Y-m-d", strtotime($searchKey)).'%')
+                ->orWhere('ipaddress LIKE ?', '%'.$searchKey.'%');
+            $paginatorOrderLink .= '/key/' . $searchKey;
+        }
+
+        $adapter = new Zend_Paginator_Adapter_DbSelect($select);
+        $users = $adapter->getItems($offset, 10);
+        $userPaginator = new Zend_Paginator($adapter);
+        $userPaginator->setCurrentPageNumber($pnum);
+        $userPaginator->setItemCountPerPage(10);
+
+        $pager = $this->view->paginationControl($userPaginator, 'Sliding', 'backend/user/pager.phtml',
+            array(
+                'urlData' => $this->_websiteUrl . 'backend/backend_user/manage',
+                'order'   => $paginatorOrderLink
+            )
+        );
+
+        if ($order === 'desc') {
+            $order = 'asc';
+        } else {
+            $order = 'desc';
+        }
+
+        if (!empty($searchKey)){
+            $this->view->orderParam = $order . '/key/' . $searchKey;
+        } else {
+            $this->view->orderParam = $order;
+        }
+
+        $this->view->by = $by;
+        $this->view->order = $order;
+        $this->view->key = $searchKey;
+        $this->view->pager = $pager;
+        $this->view->users = $users;
+        $this->view->helpSection = 'users';
+        $this->view->userForm = $userForm;
 	}
 
 	public function deleteAction() {
@@ -91,6 +182,7 @@ class Backend_UserController extends Zend_Controller_Action {
                     $usrData = $user->toArray();
                     unset($usrData['password']);
                     unset($usrData['id']);
+                    unset($usrData['attributes']);
                     $dataToExport[] = $usrData;
                 }
                 $exportResult = Tools_System_Tools::arrayToCsv($dataToExport, array(
@@ -109,9 +201,7 @@ class Backend_UserController extends Zend_Controller_Action {
 					$this->getResponse()->sendResponse();
 				}
 				exit;
-               //$this->_helper->response->success($this->_helper->language->translate('Users list exported'));
             }
-            //$this->_helper->response->fail($this->_helper->language->translate('Cannot export users list.'));
         }
     }
 }

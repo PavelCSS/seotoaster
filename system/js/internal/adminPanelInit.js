@@ -11,19 +11,20 @@ $(function() {
 
 	//seotoaster admin panel cookie
 	if($.cookie('hideAdminPanel') && $.cookie('hideAdminPanel') == 1) {
-		$('#cpanelul').hide();
-		$('#logoutul').hide();
-		$('#seotoaster-logowrap').hide();
+		$('#cpanelul, .menu-links, #seotoaster-logowrap').hide();
 		$('#showhide > a').text('Expand menu'); //.addClass('rounded-bottom');
 	}
 
-
 	$('#cpanelul').accordion({
-        heightStyle: 'content'
+        heightStyle: 'content',
+		icons: null
 	});
 
 	if($.cookie('currSectionOpen')) {
-		$('#cpanelul').accordion({active: parseInt($.cookie('currSectionOpen'))});
+		$('#cpanelul').accordion({
+			active: parseInt($.cookie('currSectionOpen')),
+			icons: null
+		});
 	}
 
 	$(document).on('click', '#cpanelul li', function() {
@@ -31,14 +32,12 @@ $(function() {
 	});
 
 
-
 	$('#showhide > a').click(function() {
 		$.cookie('hideAdminPanel', ($.cookie('hideAdminPanel') == 1) ? 0 : 1);
 		$(this).text(($.cookie('hideAdminPanel') == 1) ? 'Expand menu' : 'Collapse menu'); //.toggleClass('rounded-bottom');
-		$('#cpanelul').slideToggle();
-		$('#logoutul').toggle();
-		$('#seotoaster-logowrap').slideToggle();
-	})
+		$('#cpanelul, #seotoaster-logowrap').slideToggle();
+		$('.menu-links').toggle();
+	});
 
 	//admin panel edit 404 page click
 	$('#edit404').click(function(){
@@ -47,10 +46,24 @@ $(function() {
 				window.location.href = responseText.notFoundUrl;
 			}
 			else {
-				smoke.alert('Sorry, but you don\'t have the 404 error page You can create a page and assign it as 404 error page Use the checkbox on the create/update page screen.', {'classname':'errors'});
+				smoke.alert($('#edit404-errorMsg').html(), {'classname':'errors'});
 			}
 		});
 	});
+
+    // Clean all cache
+    $('#cleancache').on('click', function() {
+        showMessage('Clearing cache...', false);
+
+        $.get($('#website_url').val() + 'backend/backend_content/cleancache/', function(response) {
+            if (response.error == 0) {
+                showMessage(response.responseText, false, 2500);
+            }
+            else {
+                showMessage(response.responseText, true);
+            }
+        });
+    });
 
 	//admin panel delete this page link
 	$('#del-this-page').click(function() {
@@ -61,7 +74,7 @@ $(function() {
 		if(isCategory) {
 			$.getJSON(websiteUrl + 'backend/backend_page/checkforsubpages/pid/' + pageId, function(response) {
 				if(response.responseText.subpages) {
-					smoke.alert(response.responseText.message, {'classname':'errors'});
+					smoke.alert(response.responseText.message, function(e){}, {'classname':'warning'});
 					return false;
 				} else {
 					showDelConfirm();
@@ -94,11 +107,11 @@ function showDelConfirm() {
 						top.location.href = websiteUrl;
 					}
 					else {
-						smoke.alert(response.responseText.body, {'classname':'errors'});
+						smoke.alert(response.responseText.body, {'classname':'error'});
 					}
 
 				}
 			})
 		}
-	}, {'classname':'errors', 'ok':'Yes', 'cancel':'No'});
+	}, {'classname':'error', 'ok':'Yes', 'cancel':'No'});
 }

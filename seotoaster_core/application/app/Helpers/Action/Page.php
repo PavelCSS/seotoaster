@@ -44,7 +44,7 @@ class Helpers_Action_Page extends Zend_Controller_Action_Helper_Abstract {
             ->addFilter(new Zend_Filter_PregReplace(array('match' => '/\s+/', 'replace' => '-')));
 
         // filtering the page url
-        $pageUrl = $filterChain->filter($pageUrl);
+        $pageUrl = $filterChain->filter($this->clean($pageUrl));
 
         // add .html if needed
 		// TODO: in fact it always needed because of Zend_Filter_Alnum in $filterChain
@@ -72,12 +72,20 @@ class Helpers_Action_Page extends Zend_Controller_Action_Helper_Abstract {
      * @param $pageUrl string
      */
     public function do301Redirect($pageUrl) {
-		$redirectMap = array();
+		$redirectMap = $this->_cache->load('toaster_301redirects', '301redirects');
+        if (!is_array($redirectMap)) {
+            $redirectMap = array();
+        }
 		$this->_redirector->setCode(301);
 
-		if(($redirectMap = $this->_cache->load('toaster_301redirects', '301redirects')) === null) {
-			$redirectMap = Application_Model_Mappers_RedirectMapper::getInstance()->fetchRedirectMap();
-    		$this->_cache->save('toaster_301redirects', $redirectMap, '301redirects', array(), Helpers_Action_Cache::CACHE_LONG);
+		if($redirectMap === null || !isset($redirectMap[$this->_website->getUrl() . $pageUrl])) {
+            if(!in_array($this->_website->getUrl() . $pageUrl, $redirectMap)) {
+                $redirect = Application_Model_Mappers_RedirectMapper::getInstance()->fetchRedirectMap($pageUrl);
+                if($redirect !== null) {
+                    $redirectMap[$redirect->getDomainFrom() . $redirect->getFromUrl()] = $redirect->getdomainTo() . $redirect->getToUrl();
+                    $this->_cache->save('toaster_301redirects', $redirectMap, '301redirects', array(), Helpers_Action_Cache::CACHE_NORMAL);
+                }
+            }
 		}
 
         if(!empty($redirectMap)) {

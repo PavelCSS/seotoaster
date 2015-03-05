@@ -8,7 +8,10 @@ class Zend_View_Helper_ToasterUploader extends Zend_View_Helper_Abstract {
 
 	private $_libraryPath = 'system/js/external/plupload/';
 
-	private $_uploadForm = null;
+    /**
+     * @deprecated TODO remove
+     */
+    private $_uploadForm = null;
 
 	private $_uploadActionUrl = array(
 		'controller' => 'backend_upload',
@@ -25,6 +28,7 @@ class Zend_View_Helper_ToasterUploader extends Zend_View_Helper_Abstract {
 	 * Generates upload form
 	 * @param array $options
 	 * @param string $options['id'] Unique id for uploader form
+	 * @param string $options['type'] by default renders an upload button. Pass "dragdrop" option to allow drag'n'drop uploading.
 	 * @param boolean $options['caller'] Define context from which upload was called
 	 * @param boolean $options['disableResize'] Turn off client-side resizing (if supported in browser)
 	 * @param boolean $options['noMultiupload'] Turn off client-side multiple file selection for upload (will be applyed for all instances of upload on page)
@@ -46,22 +50,25 @@ class Zend_View_Helper_ToasterUploader extends Zend_View_Helper_Abstract {
 		$dbConfigHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
 		//assign all necessary JS and CSSs
 		$websiteUrl = Zend_Controller_Action_HelperBroker::getExistingHelper('website')->getUrl();
-		$this->view->jQuery()->addJavascriptFile($websiteUrl.$this->_libraryPath.'plupload.js');
-		$this->view->jQuery()->addJavascriptFile($websiteUrl.$this->_libraryPath.'plupload.html5.js');
-		$this->view->jQuery()->addJavascriptFile($websiteUrl.$this->_libraryPath.'plupload.html4.js');
-		$this->view->jQuery()->addJavascriptFile($websiteUrl.$this->_libraryPath.'plupload.flash.js');
+		$this->view->inlineScript()
+             ->appendFile($websiteUrl.$this->_libraryPath.'plupload.js')
+             ->appendFile($websiteUrl.$this->_libraryPath.'plupload.html5.js')
+             ->appendFile($websiteUrl.$this->_libraryPath.'plupload.html4.js')
+             ->appendFile($websiteUrl.$this->_libraryPath.'plupload.flash.js');
 
 		//assign all view variables
 		$this->view->config     = Zend_Registry::get('misc');
 		$this->view->teaserSize = $dbConfigHelper->getConfig('teaserSize');
 		$this->view->actionUrl  = preg_replace('~/.*[/]*backend/~iu', $websiteUrl . 'backend/', $this->view->url($this->_uploadActionUrl, 'backend'));
-		//$this->view->actionUrl = trim($websiteUrl,'/') . $this->view->url($this->_uploadActionUrl, 'backend');
 		$this->view->formId = isset($options['id']) && !empty ($options['id']) ? $options['id'] : 'toaster-uploader';
+		$this->view->formType   = isset($options['type']) && !empty ($options['type']) ? $options['type'] : 'button';
 		$this->view->buttonCaption = isset($options['caption']) && !empty ($options['caption']) ? $options['caption'] : 'Upload files';
 
-		$this->view->fileTypes = $this->_fileTypes;
-		$this->view->filters = isset($options['filters']) && !empty ($options['filters']) ? $options['filters'] : null;
-
+        if (isset($options['filters']) && !empty ($options['filters'])) {
+            $this->view->filters = array_values(array_intersect_key($this->_fileTypes, array_flip($options['filters'])));
+        } else {
+            $this->view->filters = array();
+        }
 		$this->view->caller = isset($this->_uploadActionUrl['caller']) ? $this->_uploadActionUrl['caller'] : false;
 
 		// max upload file size and files count

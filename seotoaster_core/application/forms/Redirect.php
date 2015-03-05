@@ -35,16 +35,11 @@ class Application_Form_Redirect extends Zend_Form {
 			)
 		)));
 
-		$this->addElement(new Zend_Form_Element_Radio(array(
-			'name'         => 'urlType',
-			'multiOptions' => array(
-				0 => 'Local url',
-				1 => 'External url'
-			),
-			//'label'     => 'Url',
+		$this->addElement(new Zend_Form_Element_Checkbox(array(
+			'name'    => 'urlType',
 			'required'  => true,
-			'separator' => '',
-			'value'     => 'local'
+			'value'   => 'local',
+			'checked' => 'checked'
 		)));
 
 		$this->addElement(new Zend_Form_Element_Select(array(
@@ -61,13 +56,16 @@ class Application_Form_Redirect extends Zend_Form {
 		)));
         $this->getElement('toUrl')->setDisableTranslator(true);
 
-		$this->addElement(new Zend_Form_Element_Submit(array(
+		$this->addElement(new Zend_Form_Element_Button(array(
 			'name'  => 'addRedirect',
 			'id'    => 'add-redirect',
 			'value' => 'Add redirect',
-			'class' => 'blue-btn',
-			'label' => 'Add redirect'
+			'class' => 'btn ticon-plus grid_2 omega',
+			'label' => 'Add redirect',
+            'type'  => 'submit'
 		)));
+
+		$this->setElementDecorators(array('ViewHelper', 'Label'));
 
 	}
 

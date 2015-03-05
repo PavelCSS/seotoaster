@@ -6,6 +6,44 @@ $(function() {
         $('#tabs-frag-2').empty().load($('#website_url').val() + 'backend/backend_content/loadwidgetmaker/');
     });
 
+    $(document).on('click', 'a.ui-tabs-anchor', function() {
+        var bigTab = $(this).find('#products, #news');
+        if(!bigTab.length) {
+            $('.mce-toolbar-grp').show();
+            $('.above-editor-links').removeClass('grid_4').addClass('grid_8');
+            $('#tabs').removeClass('grid_8').addClass('grid_4');
+        } else {
+            $('.above-editor-links').removeClass('grid_8').addClass('grid_4');
+            $('#tabs').removeClass('grid_4').addClass('grid_8');
+            $('.mce-toolbar-grp').hide();
+        }
+    });
+
+    $(document).on('click', '[aria-label="Fullscreen"]', function() {
+        var popup = $(window.parent.document).find('[aria-describedby="toasterPopup"]');
+        popup.toggleClass('screen-expand');
+        var $tabs = $('#tabs'),
+            height = $tabs.height(),
+            tabNavHeight = $tabs.find('.ui-tabs-nav').height(),
+            $tabHeader = $tabs.find('#adminthingsviewer .ui-accordion-header'),
+            tabHeaderLenght = $tabHeader.length,
+            tabHeaderHeight = $tabHeader.outerHeight(),
+            tabFolderFieldHeight = $tabs.find('#adminselectimgfolder').outerHeight(),
+            tabProductButton = $tabs.find('#btn-create').outerHeight(),
+            tabNetContentButton = $tabs.find('#widgetSync').outerHeight() + 5;
+
+        $tabs.find('#adminthingsviewer .ui-accordion-content').css({
+            'max-height' : height - tabNavHeight - (tabHeaderHeight + 2) * tabHeaderLenght  - tabFolderFieldHeight - 30
+        });
+        $tabs.find('#product-products').css({
+            'height' : height - tabNavHeight - tabProductButton - 116
+        });
+        $tabs.find('.netcontent-widget-list').css({
+            'height' : height - tabNavHeight - tabNetContentButton - 12
+        });
+
+    });
+
     $('#btn-submit').click(function(){
         $('#frm_content').submit();
     });
@@ -25,7 +63,7 @@ $(function() {
 			type       : 'post',
 			dataType   : 'json',
 			data       : elements,
-			beforeSend : showSpinner,
+			beforeSend : showSpinner(),
 			success : function() {
 				localStorage.removeItem(generateStorageKey());
 				top.location.reload();
@@ -51,10 +89,12 @@ $(function() {
 					//console.log('loading...');
 				},
 				success : function(images) {
-					$('#images_small').html(images.small);
-					$('#images_medium').html(images.medium);
-					$('#images_large').html(images.large);
-					$('#images_original').html(images.original);
+					$('#images_small').find('.images-preview').replaceWith(images.small);
+					$('#images_medium').find('.images-preview').replaceWith(images.medium);
+					$('#images_large').find('.images-preview').replaceWith(images.large);
+					$('#images_original').find('.images-preview').replaceWith(images.original);
+
+
 				},
 				error: function() {
 					//console.log('error');
@@ -79,9 +119,9 @@ $(function() {
 				error: function() {
 					listFiles.html('Unable to load files list');
 				}
-			})
+			});
 		//}
-	})
+	});
 
 	$('#widgets').click(function(){
 		var widgetsMaker = $('#widgets_maker');
@@ -98,41 +138,53 @@ $(function() {
 				}
 			})
 		}
-	})
-
-	$('#toogletinymce').click(function() {
-		var editorId = 'content';
-		if(!tinyMCE.getInstanceById(editorId)) {
-			$(this).text('SHOW HTML');
-			tinyMCE.execCommand('mceAddControl', false, editorId);
-		}
-		else {
-			$(this).text('SHOW EDITOR');
-			tinyMCE.execCommand('mceRemoveControl', false, editorId);
-		}
 	});
+
+//	$('#toogletinymce').click(function() {
+//		var editorId = 'content';
+//        $('#tabs').tabs({active : 0}).toggleClass('hidden');
+//
+//        if($('#tabs.grid_8').length){
+//            $('#tabs').toggleClass('grid_4 grid_8');
+//            $('.above-editor-links').toggleClass('grid_12 grid_4');
+//        }else{
+//            $('.above-editor-links').toggleClass('grid_12 grid_8');
+//        }
+//
+//		if(!tinyMCE.getInstanceById(editorId)) {
+//			$(this).text('SHOW HTML');
+//			tinyMCE.execCommand('mceAddControl', false, editorId);
+//		}
+//		else {
+//			$(this).text('SHOW EDITOR');
+//			tinyMCE.execCommand('mceRemoveControl', false, editorId);
+//
+//		}
+//	});
 
 	var restoredContent = localStorage.getItem(generateStorageKey());
 	if(restoredContent !== null) {
 		showConfirm('We have found content that has not been saved! Restore?', function() {
+            tinymce.activeEditor.setContent(restoredContent);
 			$('#content').val(restoredContent);
 		}, function() {
 			localStorage.removeItem(generateStorageKey());
 		}, 'success');
 	}
-})
+});
 
-function dispatchEditorKeyup(editor, event) {
-    if(editor.keyUpTimer === null) {
-	    editor.keyUpTimer = setTimeout(function() {
-		    localStorage.setItem(generateStorageKey(), editor.getContent());
-		    editor.keyUpTimer = null;
+function dispatchEditorKeyup(editor, event, keyTime) {
+    var keyTimer = keyTime;
+    if(keyTimer === null) {
+        keyTimer = setTimeout(function() {
+		    localStorage.setItem(generateStorageKey(), tinymce.activeEditor.getContent());
+            keyTimer = null;
 	    }, 1000)
     }
 }
 
 function insertFileLink(fileName) {
-	$('#content').tinymce().execCommand(
+    tinymce.activeEditor.execCommand(
 		'mceInsertContent',
 		false,
 		'<a href="' + $('#website_url').val() + 'media/' + $('#adminselectimgfolder').val() + '/' + fileName + '" title="' + fileName + '">' + fileName + '</a>'

@@ -36,7 +36,7 @@ class Application_Form_Deeplink extends Zend_Form {
 			'filters'    => array('StringTrim')
 		)));
 
-		$this->addElement(new Zend_Form_Element_Radio(array(
+		/*$this->addElement(new Zend_Form_Element_Radio(array(
 			'name'         => 'urlType',
 			'multiOptions' => array(
 				0 => 'Local url',
@@ -46,6 +46,14 @@ class Application_Form_Deeplink extends Zend_Form {
 			'required'  => true,
 			'separator' => '',
 			'value'     => 'local'
+		)));*/
+
+		$this->addElement(new Zend_Form_Element_Checkbox(array(
+			'name'    => 'urlType',
+			//'label'   => 'Local url',
+			'required'  => true,
+			'value'   => 'local',
+			'checked' => 'checked'
 		)));
 
 		$this->addElement(new Zend_Form_Element_Select(array(
@@ -70,13 +78,18 @@ class Application_Form_Deeplink extends Zend_Form {
 			'checked' => ($this->_nofollow) ? 'checked' : ''
 		)));
 
-		$this->addElement(new Zend_Form_Element_Submit(array(
+		$this->addElement(new Zend_Form_Element_Button(array(
 			'name'  => 'addDeeplink',
 			'id'    => 'add-deeplink',
-            'class' => 'blue-btn',
+			'class' => 'btn ticon-plus grid_2 omega',
 			'value' => 'Add deeplink',
-			'label' => 'Add deeplink'
+			'label' => 'Add deeplink',
+            'type'  => 'submit'
 		)));
+
+		$this->setElementDecorators(array('ViewHelper', 'Label'));
+
+		$this->getElement('addDeeplink')->setDecorators(array('ViewHelper'));
 	}
 
 	public function getAnchorText() {

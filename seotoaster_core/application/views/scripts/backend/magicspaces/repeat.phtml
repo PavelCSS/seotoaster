@@ -1,0 +1,42 @@
+<div class="seotoaster container refreshOnClose">
+    <?php echo $this->partial('admin'.DIRECTORY_SEPARATOR.'_header.phtml', array('headerText' => 'Edit repeat')); ?>
+    <form class="content-auto" action="javascript:;" method="<?php echo $this->configRepeat->getMethod(); ?>">
+        <div class="grid_2">
+            <label><?php echo $this->translate('Quantity'); ?></label>
+            <?php echo $this->configRepeat->getElement('quantity'); ?>
+        </div>
+        <div class="grid_7 mt0px">
+            <label><?php echo $this->translate('Order'); ?></label>
+            <?php echo $this->configRepeat->getElement('orderContent'); ?>
+        </div>
+        <div class="grid_3 alpha mt2em">
+            <label>
+                <?php echo $this->translate('Use inversion'); ?>
+                <?php echo $this->configRepeat->getElement('inversion'); ?>
+            </label>
+        </div>
+        <?php echo $this->configRepeat->getElement('submit')->renderViewHelper(); ?>
+    </form>
+</div>
+<script type="text/javascript">
+    $(function () {
+        $("#submit").on('click', function (e) {
+            e.preventDefault();
+            showSpinner();
+            $.ajax({
+                url: '<?php echo $this->configRepeat->getAction(); ?>',
+                type: '<?php echo $this->configRepeat->getMethod(); ?>',
+                data: $('form').serialize(),
+                success: function (response) {
+                    if (!response.error) {
+                        showMessage("Done");
+                    }
+                },
+                error: function (err) {
+                    showMessage(err, true);
+                }
+            });
+            hideSpinner();
+        });
+    });
+</script>

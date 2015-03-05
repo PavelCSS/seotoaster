@@ -7,7 +7,7 @@
 class Backend_FormController extends Zend_Controller_Action {
 
     const FORM_THANKYOU_PAGE = 'option_formthankyoupage';
-    const ATTACHMENTS_FILE_TYPES = 'xml,csv,doc,zip,jpg,png,bmp,gif,xls,pdf,docx,txt';
+    const ATTACHMENTS_FILE_TYPES = 'xml,csv,doc,zip,jpg,png,bmp,gif,xls,pdf,docx,txt,xlsx';
 
 	public static $_allowedActions = array(
 		'receiveform',
@@ -16,7 +16,7 @@ class Backend_FormController extends Zend_Controller_Action {
 
     public function init() {
 		parent::init();
-		if(!Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_CONTENT) && !Tools_Security_Acl::isActionAllowed()) {
+		if(!Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_CONTENT) && !Tools_Security_Acl::isActionAllowed(Tools_Security_Acl::RESOURCE_CONTENT)) {
 			$this->_redirect($this->_helper->website->getUrl(), array('exit' => true));
 		}
     	$this->view->websiteUrl = $this->_helper->website->getUrl();
@@ -59,12 +59,13 @@ class Backend_FormController extends Zend_Controller_Action {
 			}
 		}
 		$formName           = filter_var($this->getRequest()->getParam('name'), FILTER_SANITIZE_STRING);
+
         $pageId             = $this->getRequest()->getParam('pageId');
         $trackingPageName   = 'form-'.$formName.'-thank-you';
         $trackingPageUrl    = $this->_helper->page->filterUrl($trackingPageName);
         $trackingPageExist  = $pageMapper->findByUrl($trackingPageUrl);
         if(!empty($trackingPageExist)){
-            $trackingPageResultUrl = $trackingPageUrl;
+            $this->view->trackingPageUrl = $trackingPageUrl;
         }
 		$form          = Application_Model_Mappers_FormMapper::getInstance()->findByName($formName);
 		$mailTemplates = Tools_Mail_Tools::getMailTemplatesHash();
@@ -74,11 +75,11 @@ class Backend_FormController extends Zend_Controller_Action {
             $formForm->getElement('trackingCode')->setValue($conversionCode[0]->getConversionCode());
         }
 		$formForm->getElement('name')->setValue($formName);
+        
 		$formForm->getElement('replyMailTemplate')->setMultioptions(array_merge(array(0 => 'select template'), $mailTemplates));
 		if($form !== null) {
 			$formForm->populate($form->toArray());
 		}
-        $this->view->trackingPageUrl = $trackingPageResultUrl;
         $this->view->regularTemplates = $regularPageTemplates;
         $this->view->pageId = $pageId;
 		$this->view->formForm = $formForm;
@@ -146,8 +147,8 @@ class Backend_FormController extends Zend_Controller_Action {
 
                 //validating recaptcha
                 if($useCaptcha == 1){
-                    if(!empty($websiteConfig) && isset($websiteConfig['recapthaPublicKey']) && $websiteConfig['recapthaPublicKey'] != '' 
-                            && isset($websiteConfig['recapthaPrivateKey']) && $websiteConfig['recapthaPrivateKey'] != '' 
+                    if(!empty($websiteConfig) && !empty($websiteConfig[Tools_System_Tools::RECAPTCHA_PUBLIC_KEY])
+                            && !empty($websiteConfig[Tools_System_Tools::RECAPTCHA_PRIVATE_KEY])
                             && isset($formParams['recaptcha_challenge_field']) || isset($formParams['captcha'])){
                         
                         if(isset($formParams['recaptcha_challenge_field']) && isset($formParams['recaptcha_response_field'])) {
@@ -158,7 +159,7 @@ class Backend_FormController extends Zend_Controller_Action {
                                 $sessionHelper->toasterFormError = $this->_helper->language->translate('You\'ve entered an incorrect security text. Please try again.');
                                 $this->_redirect($formParams['formUrl']);
                             }
-                            $recaptcha = new Zend_Service_ReCaptcha($websiteConfig['recapthaPublicKey'], $websiteConfig['recapthaPrivateKey']);
+                            $recaptcha = new Zend_Service_ReCaptcha($websiteConfig[Tools_System_Tools::RECAPTCHA_PUBLIC_KEY], $websiteConfig[Tools_System_Tools::RECAPTCHA_PRIVATE_KEY]);
                             $result = $recaptcha->verify($formParams['recaptcha_challenge_field'], $formParams['recaptcha_response_field']);
                             if(!$result->isValid()){
                                 if($xmlHttpRequest){
@@ -188,6 +189,18 @@ class Backend_FormController extends Zend_Controller_Action {
                     }
                                    
                 }
+                //Check if email is valid
+                if (isset($formParams['email'])) {
+                    $emailValidation = new Zend_Validate_EmailAddress();
+                    $validEmail = $emailValidation->isValid($formParams['email']);
+                    if(!$validEmail){
+                        if($xmlHttpRequest){
+                            $this->_helper->response->fail($this->_helper->language->translate('Please enter a valid email address'));
+                        }
+                        $sessionHelper->toasterFormError = $this->_helper->language->translate('Please enter a valid email address');
+                        $this->redirect($formParams['formUrl']);
+                    }
+                }
                 $sessionHelper->formName   = $formParams['formName'];
                 $sessionHelper->formPageId = $formParams['formPageId'];
 				unset($formParams['formPageId']);
@@ -198,6 +211,7 @@ class Backend_FormController extends Zend_Controller_Action {
                 }
 
                 $attachment = array();
+                $removeFiles = array();
                 if(!$xmlHttpRequest){
                     //Adding attachments to email
                     $websitePathTemp = $this->_helper->website->getPath().$this->_helper->website->getTmp();
@@ -205,7 +219,7 @@ class Backend_FormController extends Zend_Controller_Action {
                     $uploader->setDestination($websitePathTemp);
                     $uploader->addValidator('Extension', false, self::ATTACHMENTS_FILE_TYPES);
                     //Adding Size limitation
-                    $uploader->addValidator('Size', false, 10485760); //limit to 10MB
+                    $uploader->addValidator('Size', false, $formParams['uploadLimitSize']*1024*1024);
                     //Adding mime types validation
                     $uploader->addValidator('MimeType', true, array('application/pdf','application/xml', 'application/zip', 'text/csv', 'text/plain', 'image/png','image/jpeg',
                                                                     'image/gif', 'image/bmp', 'application/msword', 'application/vnd.ms-excel'));
@@ -221,7 +235,7 @@ class Backend_FormController extends Zend_Controller_Action {
                                 $at->filename    = $fileInfo['name'];
                                 $attachment[]    = $at;
                                 unset($at);
-                                Tools_Filesystem_Tools::deleteFile($this->_helper->website->getPath().$this->_helper->website->getTmp().$fileInfo['name']);
+                                $removeFiles[] = $this->_helper->website->getPath().$this->_helper->website->getTmp().$fileInfo['name'];
                             }else{
                                 $validationErrors = $uploader->getErrors();
                                 $errorMessage = '';
@@ -230,7 +244,7 @@ class Backend_FormController extends Zend_Controller_Action {
                                         $errorMessage .= 'Invalid file format type. ';
                                     }
                                     if($errorType == 'fileSizeTooBig'){
-                                        $errorMessage .= 'Maximum size upload 10mb. ';
+                                        $errorMessage .= $this->_helper->language->translate('Maximum size upload').' '.$formParams['uploadLimitSize'].'mb.';
                                     }
                                     if($errorType == 'fileExtensionFalse'){
                                         $errorMessage .= 'File extension not valid. ';
@@ -243,7 +257,7 @@ class Backend_FormController extends Zend_Controller_Action {
                     }
 
                 }
-
+                unset($formParams['uploadLimitSize']);
                	// sending mails
                 $sysMailWatchdog = new Tools_Mail_SystemMailWatchdog(array(
                     'trigger'    => Tools_Mail_SystemMailWatchdog::TRIGGER_FORMSENT,
@@ -259,6 +273,7 @@ class Backend_FormController extends Zend_Controller_Action {
                 $mailsSent = $sysMailWatchdog->notify($form);
                 if($mailsSent) {
                     $form->notifyObservers();
+                    $this->_removeAttachedFiles($removeFiles);
                     if($xmlHttpRequest){
                         $this->_helper->response->success($form->getMessageSuccess());
                     }
@@ -269,12 +284,22 @@ class Backend_FormController extends Zend_Controller_Action {
                     $sessionHelper->toasterFormSuccess = $form->getMessageSuccess();
                     $this->_redirect($formParams['formUrl']);
                 }
+                $this->_removeAttachedFiles($removeFiles);
                 if($xmlHttpRequest){
                     $this->_helper->response->fail($form->getMessageError());
                 }
                 $sessionHelper->toasterFormError = $form->getMessageError();
                 $this->_redirect($formParams['formUrl']);
 			}
+        }
+    }
+
+    private function _removeAttachedFiles(array $removeFiles)
+    {
+        if(!empty($removeFiles)) {
+            foreach($removeFiles as $file){
+                Tools_Filesystem_Tools::deleteFile($file);
+            }
         }
     }
 

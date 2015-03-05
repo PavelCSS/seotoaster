@@ -101,10 +101,19 @@ class Application_Form_User extends Zend_Form {
 			'name'   => 'saveUser',
 			'id'     => 'save-user',
 			'value'  => 'Save user',
-			'class'  => 'blue-btn',
+			'class'  => 'btn',
 			'ignore' => true,
-			'label'  => 'Save user'
+			'label'  => 'Save user',
+			'escape' => false
 		)));
+
+        $this->addElement('hash', 'secureToken', array(
+            'ignore' => true,
+            'timeout' => 1440
+        ));
+
+		$this->setElementDecorators(array('ViewHelper', 'Label'));
+		$this->getElement('saveUser')->removeDecorator('Label');
 	}
 
 	public function getEmail() {

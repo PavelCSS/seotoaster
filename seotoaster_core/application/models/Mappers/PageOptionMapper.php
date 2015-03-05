@@ -36,10 +36,14 @@ class Application_Model_Mappers_PageOptionMapper extends Application_Model_Mappe
         return $model;
     }
 
-    public function fetchOptions($activeOnly = false) {
+    public function fetchOptions($activeOnly = false, $pairs = false) {
         $where = '';
         if($activeOnly) {
             $where = $this->getDbTable()->getAdapter()->quoteInto('active=?', true);
+        }
+        if($pairs){
+            $select = $this->getDbTable()->select();
+            return $this->getDbTable()->getAdapter()->fetchAssoc($select);
         }
         return $this->fetchAll($where);
     }
@@ -51,5 +55,25 @@ class Application_Model_Mappers_PageOptionMapper extends Application_Model_Mappe
         }
         $optionsRowset = $this->getDbTable()->fetchAll($select);
         return $optionsRowset->toArray();
+    }
+
+    public function checkOptionUsage($optionId, $pageUrl, $once = Application_Model_Models_Page::OPTION_USAGE_ONCE)
+    {
+        $where = $this->getDbTable()->getAdapter()->quoteInto('po.id=?', $optionId);
+        $where .= ' AND ' . $this->getDbTable()->getAdapter()->quoteInto('po.option_usage=?', $once);
+        $where .= ' AND ' . $this->getDbTable()->getAdapter()->quoteInto('p.url <> ?', $pageUrl);
+        $select = $this->getDbTable()->select()->setIntegrityCheck(false)
+            ->from(array('po' => 'page_option'))
+            ->joinLeft(array('pho' => 'page_has_option'), 'po.id = pho.option_id')
+            ->joinLeft(array('p' => 'page'), 'p.id = pho.page_id')
+            ->where($where);
+        return $this->getDbTable()->getAdapter()->fetchRow($select);
+    }
+
+    public function deletePageHasOption($optionId)
+    {
+        $pageHasOptionDbTable = new Application_Model_DbTable_PageHasOption();
+        $where = $pageHasOptionDbTable->getAdapter()->quoteInto('option_id=?', $optionId);
+        $pageHasOptionDbTable->delete($where);
     }
 }

@@ -1,0 +1,15 @@
+// Alert states
+//==================================================
+.alert-color(@color, @background, @border){
+    background-color : @background;
+    border-color     : @border;
+    color            : @color;
+
+    hr{
+        background : darken(@border, 5%);
+    }
+
+    a{
+        color : darken(@color, 10%);
+    }
+}

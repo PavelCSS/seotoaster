@@ -27,6 +27,12 @@ class Tools_Mail_SystemMailWatchdog implements Interfaces_Observer {
 	const TRIGGER_PASSWORDRESET     = 't_passwordreset';
 
     /**
+     * User change atttibutes
+     *
+     */
+    const TRIGGER_USERCHANGEATTR     = 't_userchangeattr';
+
+    /**
      * Password change trigger. Launches sending of mails
      */
     const TRIGGER_PASSWORDCHANGE    = 't_passwordchange';
@@ -193,11 +199,13 @@ class Tools_Mail_SystemMailWatchdog implements Interfaces_Observer {
             $mailBody .= '<div style="background:#eee;padding:10px;">'.$this->_translator->translate('This form was submitted from').': <a href="' . $formUrl . '">' . $formUrl . '</a></div>';
         }
 
+        $senderFullName = (isset($formDetails['lastname'])) ? $formDetails['name'].' '.$formDetails['lastname']: $formDetails['name'];
+
         if(isset($this->_options['attachment']) && is_array($this->_options['attachment']) && !empty($this->_options['attachment'])){
             $this->_mailer->addAttachment($this->_options['attachment']);
         }
         $this->_mailer->setBody($mailBody);
-        $this->_mailer->setSubject($this->_translator->translate('New') .' '. $form->getName() . ' '.$this->_translator->translate('form submitted'))
+        $this->_mailer->setSubject($this->_translator->translate('New') .' '. $form->getName() . ' '.$this->_translator->translate('form submitted from'). ' '. $senderFullName)
             ->setMailFromLabel($this->_translator->translate('Notifications @ ') . $this->_websiteHelper->getUrl())
             ->setMailFrom($this->_configHelper->getConfig('adminEmail'));
         return $this->_mailer->send();
@@ -263,6 +271,46 @@ class Tools_Mail_SystemMailWatchdog implements Interfaces_Observer {
         return $this->_mailer->send();
     }
 
+    protected function _sendTuserchangeattrMail(Application_Model_Models_User $user) {
+        $subject = ($this->_options['subject'] == '') ? $this->_websiteHelper->getUrl().' '.$this->_translator->translate('User attribute changed'):$this->_options['subject'];
+
+        $this->_mailer->setMailFrom($this->_options['from'])
+            ->setMailFromLabel($this->_websiteHelper->getUrl() . ' '.$this->_translator->translate('User change attr'))
+            ->setBody($this->_prepareEmailBody())
+            ->setSubject($subject);
+        $this->_entityParser->objectToDictionary($user);
+        $this->_entityParser->addToDictionary($user->getAttributes());
+        $this->_mailer->setBody($this->_entityParser->parse($this->_mailer->getBody()));
+        switch ($this->_options['recipient']) {
+            case self::RECIPIENT_ADMIN:
+                $adminBccArray = array();
+                $userMapper = Application_Model_Mappers_UserMapper::getInstance();
+                $where = $userMapper->getDbTable()->getAdapter()->quoteInto("role_id = ?", Tools_Security_Acl::ROLE_ADMIN);
+                $admins = $userMapper->fetchAll($where);
+                if(!empty($admins)){
+                    foreach($admins as $key=>$admin){
+                        if($key == 0){
+                            $this->_mailer->setMailTo($admin->getEmail());
+                        }else{
+                            array_push($adminBccArray, $admin->getEmail());
+                        }
+                    }
+                    if(!empty($adminBccArray)){
+                        $this->_mailer->setMailBcc($adminBccArray);
+                    }
+                    }else{
+                        return;
+                    }
+                break;
+            case self::RECIPIENT_SUPERADMIN:
+                $superAdmin = Application_Model_Mappers_UserMapper::getInstance()->findByRole(Tools_Security_Acl::ROLE_SUPERADMIN);
+                $this->_mailer->setMailTo($superAdmin->getEmail());
+                break;
+        }
+        return $this->_mailer->send();
+    }
+
+
     protected function _sendTsystemnotificationMail() {
 
     }
@@ -285,10 +333,26 @@ class Tools_Mail_SystemMailWatchdog implements Interfaces_Observer {
                 'websiteUrl'   => $this->_websiteHelper->getUrl(),
                 'websitePath'  => $this->_websiteHelper->getPath(),
                 'currentTheme' => $extConfig['currentTheme'],
-                'themePath'    => $themeData['path'],
+                'themePath'    => Tools_Filesystem_Tools::cleanWinPath($themeData['path']),
             );
-            $parser = new Tools_Content_Parser($mailTemplate, array(), $parserOptions);
-            return $parser->parseSimple();
+
+            $cDbTable = new Application_Model_DbTable_Container();
+            $select = $cDbTable->getAdapter()->select()->from('container', array(
+                'uniqHash' => new Zend_Db_Expr("MD5(CONCAT_WS('-',`name`, COALESCE(`page_id`, 0), `container_type`))"),
+                'id',
+                'name',
+                'page_id',
+                'container_type',
+                'content',
+                'published',
+                'publishing_date'
+            ))
+            ->where('(container_type = 2 OR container_type = 4)')
+            ->where('page_id IS NULL');
+            $stat   = $cDbTable->getAdapter()->fetchAssoc($select);
+            $parser = new Tools_Content_Parser($mailTemplate, array('containers' => $stat), $parserOptions);
+
+            return Tools_Content_Tools::stripEditLinks($parser->parseSimple());
         }
         return false;
     }

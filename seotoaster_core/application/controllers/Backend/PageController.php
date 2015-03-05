@@ -6,25 +6,34 @@
  */
 class Backend_PageController extends Zend_Controller_Action {
 
+    const DEFAULT_TEMPLATE = 'default';
+
     public static $_allowedActions = array('publishpages', 'listpages');
 
     protected $_mapper             = null;
 
     public function init() {
-        if(!Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_PAGES) && !Tools_Security_Acl::isActionAllowed()) {
+        if(!Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_PAGES) && !Tools_Security_Acl::isActionAllowed(Tools_Security_Acl::RESOURCE_CONTENT)) {
             $this->redirect($this->_helper->website->getUrl(), array('exit' => true));
         }
         $this->view->websiteUrl = $this->_helper->website->getUrl();
 
-        $this->_helper->AjaxContext()->addActionContexts(array(
+        if ('' == $this->getRequest()->getParam('format', '')) {
+            $this->getRequest()->setParam('format', 'json');
+        }
+
+        /* @var Zend_Controller_Action_Helper_ContextSwitch $contextSwitch */
+        $this->_helper->contextSwitch
+            ->addContext('html', array('suffix' => 'html', 'headers' => array('Content-Type' => 'text/html')))
+            ->addActionContexts(array(
             'edit404page'      => 'json',
             'rendermenu'       => 'json',
-            'listpages'        => 'json',
+            'listpages'        => array('json', 'html'),
             'publishpages'     => 'json',
             'checkforsubpages' => 'json',
             'toggleoptimized'  => 'json'
-        ))->initContext('json');
-
+            ))
+            ->initContext();
     }
 
     public function pageAction() {
@@ -33,7 +42,13 @@ class Backend_PageController extends Zend_Controller_Action {
         $pageId      = $this->getRequest()->getParam('id');
         $mapper      = Application_Model_Mappers_PageMapper::getInstance();
 
-        $page = ($pageId) ? $mapper->find($pageId) : new Application_Model_Models_Page();
+        if ($pageId) {
+            // search page by id
+            $page = $mapper->find($pageId);
+        } else {
+            // load new page
+            $page = new Application_Model_Models_Page(array('showInMenu' => Application_Model_Models_Page::IN_MAINMENU));
+        }
 
         if(!$this->getRequest()->isPost()) {
             $pageForm->getElement('pageCategory')->addMultiOptions($this->_getMenuOptions($page));
@@ -61,10 +76,15 @@ class Backend_PageController extends Zend_Controller_Action {
             $params    = $this->getRequest()->getParams();
             $messages  = ($params['pageCategory'] == -4) ? array('pageCategory' => array('Please make your selection')) : array();
             $optimized = (isset($params['optimized']) && $params['optimized']);
+            $externalLink = (isset($params['externalLinkStatus']) && $params['externalLinkStatus']);
 
             //if page is optimized by samba unset optimized values from update
             if($optimized) {
                 $params = $this->_restoreOriginalValues($params);
+            }
+
+            if($externalLink && !$optimized){
+                $params = $this->_processParamsForExternalLink($params);
             }
 
             if($pageForm->isValid($params)) {
@@ -101,6 +121,50 @@ class Backend_PageController extends Zend_Controller_Action {
                     }
                 }
 
+                //Analyze if system have options one time used
+                if ($pageData['removePreviousOption'] === '' && !empty($pageData['extraOptions'])) {
+                    $websiteHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
+                    $options = Application_Model_Mappers_PageOptionMapper::getInstance()->checkOptionUsage(
+                        $pageData['extraOptions'],
+                        $pageData['url']
+                    );
+
+                    if (!empty($options)) {
+                        $code = 200;
+                        $responseData = Zend_Json::encode(
+                            array(
+                                'error' => 1,
+                                'responseText' => $this->_helper->language->translate(
+                                    'Ohhhlaaaa! A page with this option already exists '
+                                ) . '<a target="_blank" href="' . $websiteHelper->getUrl(
+                                ) . $options['url'] . '">' . $this->_helper->language->translate(
+                                    '(see it here)'
+                                ) . '</a> ' . $this->_helper->language->translate(
+                                    'Is it okay to replace it with this one?'
+                                ),
+                                'dialog' => true,
+                                'httpCode' => $code
+                            )
+                        );
+                        $response = $this->getResponse();
+                        $response->setHttpResponseCode($code)
+                            ->setBody($responseData)
+                            ->setHeader('Content-Type', 'application/json', true);
+                        $response->sendResponse();
+                        exit;
+                    }
+
+                } else {
+                    //Removing page options that have one time options
+                    $optionsMapper = Application_Model_Mappers_PageOptionMapper::getInstance();
+                    $pageOptions = $optionsMapper->fetchOptions(false, true);
+                    if (array_key_exists($pageData['extraOptions'], $pageOptions)) {
+                        $optionsMapper->deletePageHasOption(
+                            $pageData['extraOptions']
+                        );
+                    }
+                }
+
                 $page->setOptions($pageData);
 
                 //prevent renaming of the index page
@@ -124,6 +188,25 @@ class Backend_PageController extends Zend_Controller_Action {
                     $page->setPreviewImage($previewImageName);
                 }
 
+                if ((bool) $this->_helper->config->getConfig('enableDeveloperMode')) {
+                    // Add template if not in the database
+                    if (null === Application_Model_Mappers_TemplateMapper::getInstance()->find($page->getTemplateId())) {
+                        $themesConfig = Zend_Registry::get('theme');
+                        $themePath = $this->_helper->website->getPath().$themesConfig['path'].$this->_helper->config->getConfig('currentTheme');
+                        Tools_Theme_Tools::addTemplates($themePath, array($page->getTemplateId().'.html'));
+                        Tools_Theme_Tools::updateThemeIni(
+                            $themePath,
+                            $page->getTemplateId(),
+                            Application_Model_Models_Template::TYPE_REGULAR
+                        );
+                    }
+                }
+
+                //if unset draft category publish all pages
+                if($mapper->isDraftCategory($params['pageId']) && $params['draft'] == 0){
+                    $mapper->publishChildPages($params['pageId']);
+                }
+
                 $page = $mapper->save($page);
 
                 if($checkFaPull) {
@@ -132,11 +215,15 @@ class Backend_PageController extends Zend_Controller_Action {
 
                 $page->notifyObservers();
 
-                $this->_helper->response->success(array('redirectTo' => $page->getUrl()));
+                $redirectTo = $page->getUrl();
+                if ($externalLink && !$optimized) {
+                    $redirectTo = 'index.html';
+                }
+                $this->_helper->response->success(array('redirectTo' => $redirectTo));
                 exit;
             }
             $messages = array_merge($pageForm->getMessages(), $messages);
-            $this->_helper->response->fail(Tools_Content_Tools::proccessFormMessagesIntoHtml($messages, get_class($pageForm)));
+            $this->_helper->response->fail(Tools_Content_Tools::proccessFormMessages($messages));
             exit;
         }
 
@@ -235,7 +322,7 @@ class Backend_PageController extends Zend_Controller_Action {
 
     public function organizeAction() {
         $pageMapper = Application_Model_Mappers_PageMapper::getInstance();
-
+        $pageDbTable = new Application_Model_DbTable_Page();
         if($this->getRequest()->isPost()) {
             $act = $this->getRequest()->getParam('act');
             if(!$act) {
@@ -243,13 +330,15 @@ class Backend_PageController extends Zend_Controller_Action {
             }
             switch($act) {
                 case 'save':
-                    $orderedList = array_unique($this->getRequest()->getParam('ordered'));
+                    $orderedList = array_unique(Zend_Json::decode($this->getRequest()->getParam('ordered'), Zend_Json::TYPE_ARRAY));
                     unset ($orderedList[array_search(Application_Model_Models_Page::IDCATEGORY_DEFAULT, $orderedList)]);
                     if(is_array($orderedList)) {
+                        $updatePageOrderSql = "UPDATE ".$pageDbTable->info('name')." SET `order` = :order WHERE `id` = :id ";
+                        $stmt = $pageDbTable->getAdapter()->prepare($updatePageOrderSql);
                         foreach ($orderedList as $key => $pageId) {
-                            $page = $pageMapper->find($pageId);
-                            $page->setOrder($key);
-                            $pageMapper->save($page);
+                            $stmt->bindParam('order', $key);
+                            $stmt->bindParam('id', $pageId);
+                            $stmt->execute();
                         }
                         $this->_helper->cache->clean(false, false, 'Widgets_Menu_Menu');
                         $this->_helper->response->success($this->_helper->language->translate('New order saved'));
@@ -327,28 +416,27 @@ class Backend_PageController extends Zend_Controller_Action {
     }
 
     public function linkslistAction() {
-        //external_link_list_url
-
         $this->_helper->viewRenderer->setNoRender(true);
         $this->_helper->layout->disableLayout();
 
-
-        $externalLinksContent = 'var tinyMCELinkList = new Array(';
-        $pages = Application_Model_Mappers_PageMapper::getInstance()->fetchAll($this->_getProductCategoryPageWhere(), array('h1'));
+        $where = $this->_getProductCategoryPageWhere();
+        $whereQuote = $this->_getQuotePageWhere();
+        if($where !== null && $whereQuote !== null) {
+            $where .= ' AND ' . $whereQuote;
+        }
+        else {
+            $where .= $whereQuote;
+        }
+        $pages = Application_Model_Mappers_PageMapper::getInstance()->fetchAll($where, array('h1'));
         if(!empty ($pages)) {
+            $links = array();
             foreach ($pages as $page) {
-                $externalLinksContent .= '["'
-                    . $page->getH1()
-                    . '", "'
-                    . $this->_helper->website->getUrl() . $page->getUrl()
-                    . '"],';
+                if ($page->getExtraOption(Application_Model_Models_Page::OPT_404PAGE)) {
+                    continue;
+                }
+                array_push($links, array('title'=>$page->getH1(), 'value'=>$this->_helper->website->getUrl() . $page->getUrl()));
             }
-            $externalLinksContent = substr($externalLinksContent, 0, -1) . ');';
-            $this->getResponse()->setRawHeader('Content-type: text/javascript')
-                ->setRawHeader('pragma: no-cache')
-                ->setRawHeader('expires: 0')
-                ->setBody($externalLinksContent)
-                ->sendResponse();
+            $this->getResponse()->setBody(Zend_Json::encode($links));
         }
     }
 
@@ -364,7 +452,7 @@ class Backend_PageController extends Zend_Controller_Action {
             }
         }
         if($cleanDraftCache) {
-            $this->_cache->clean(Helpers_Action_Cache::KEY_DRAFT, Helpers_Action_Cache::PREFIX_DRAFT);
+            $this->_cache->clean(false, false, Helpers_Action_Cache::TAG_DRAFT);
         }
     }
 
@@ -383,7 +471,7 @@ class Backend_PageController extends Zend_Controller_Action {
             'h1'              => $page->getH1(),
             'headerTitle'     => $page->getHeaderTitle(),
             'navName'         => $page->getNavName(),
-            'url'             => $page->getUrl(),
+            'url'             => $this->_helper->page->clean($page->getUrl()),
             'metaDescription' => $page->getMetaDescription(),
             'metaKeywords'    => $page->getMetaKeywords(),
             'teaserText'      => $page->getTeaserText()
@@ -400,6 +488,14 @@ class Backend_PageController extends Zend_Controller_Action {
         return (($productCategoryPage instanceof Application_Model_Models_Page) ? 'parent_id != "' . $productCategoryPage->getId() . '"' : null);
     }
 
+    private function _getQuotePageWhere() {
+        $quotePlugin = Application_Model_Mappers_PluginMapper::getInstance()->findByName('quote');
+        if($quotePlugin !== null && $quotePlugin->getStatus() === Application_Model_Models_Plugin::ENABLED) {
+            return 'parent_id != "' . Quote::QUOTE_CATEGORY_ID . '"';
+        }
+        return null;
+    }
+
     private function _restoreOriginalValues($pageData) {
         $page = Application_Model_Mappers_PageMapper::getInstance()->find($pageData['pageId'], true);
         $pageData['h1']              = $page->getH1();
@@ -410,6 +506,50 @@ class Backend_PageController extends Zend_Controller_Action {
         $pageData['metaDescription'] = $page->getMetaDescription();
         unset($page);
         return $pageData;
+    }
+
+    /**
+     * Prepare page params with external link
+     *
+     * @param array $params
+     * @return array
+     */
+    private function _processParamsForExternalLink(array $params)
+    {
+        $page = Application_Model_Mappers_PageMapper::getInstance()->find($params['pageId'], true);
+        $params['externalLink'] = $params['url'];
+        if (!empty($params['externalLink']) && !preg_match('~(http|https|ftp):\/\/~', $params['externalLink'])) {
+            $params['externalLink'] = 'http://' . $params['externalLink'];
+        }
+        if ($page instanceof Application_Model_Models_Page) {
+            $params['url'] = $page->getUrl();
+            $params['metaKeywords'] = $page->getMetaKeywords();
+            $params['headerTitle'] = $page->getHeaderTitle();
+            $params['h1'] = $page->getHeaderTitle();
+            $params['metaDescription'] = $page->getMetaDescription();
+            $params['templateId'] = $page->getTemplateId();
+            if (!$page->getExternalLinkStatus()) {
+                $this->_helper->cache->clean();
+            }
+
+        } else {
+            $params['templateId'] = self::DEFAULT_TEMPLATE;
+            $params['h1'] = self::DEFAULT_TEMPLATE;
+            $params['headerTitle'] = self::DEFAULT_TEMPLATE;
+            $this->_helper->cache->clean();
+        }
+        return $params;
+    }
+    /**
+     * Checks if the category is draft
+     */
+    public function isDraftCategoryAction()
+    {
+        if ($this->getRequest()->isPost()) {
+            $categoryID = $this->getRequest()->getPost('id', null);
+            $this->_helper->response->success(Application_Model_Mappers_PageMapper::getInstance()->isDraftCategory($categoryID));
+        }
+
     }
 }
 

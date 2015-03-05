@@ -1,0 +1,26 @@
+// Thumbnail state style
+//==================================================
+.thumbnail-state(
+    @radius       : @thumbnail-border-radius;
+    @border-width : @thumbnail-border-width;
+    @border-color : @thumbnail-border-color;
+    @background   : @thumbnail-bg
+) {
+    position   : relative;
+    cursor     : pointer;
+    overflow   : hidden;
+    text-align : center;
+    padding    : @thumbnail-padding;
+    background : @background;
+    .border-radius(@radius);
+    & when (@border-width > 0){
+        border : @border-width solid @border-color;
+    }
+
+    &:hover{
+        & when (@border-width > 0){
+            border-color : @thumbnail-color-hover;
+        }
+        .box-shadow(3px 3px 3px @thumbnail-color-hover; @thumbnail-shadow-hover);
+    }
+}

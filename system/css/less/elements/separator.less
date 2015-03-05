@@ -1,0 +1,43 @@
+hr{
+    clear       : both;
+    margin      : 1.25em 0 1.75em;
+    border      : none;
+    border-top  : @hr-size solid @hr-color;
+    line-height : 0;
+
+    // With text
+    &:before{
+        content     : attr(title);
+        top         : -0.5em;
+        position    : relative;
+        line-height : 1;
+        color       : @hr-color;
+        margin      : -(@hr-size / 2) 15px 0;
+        padding     : 0px .75em;
+        .inline-block();
+        .background() when (@content-bg = transparent){
+            background : @body-bg;
+        }
+        .background() when not(@content-bg = transparent){
+            background : @content-bg;
+        }
+        .background();
+    }
+
+    &.left when (@separator-left = true) and (@separator-style = true) { text-align : left; }
+    &.right when (@separator-right = true) and (@separator-style = true){ text-align : right; }
+    &.center when (@separator-center = true) and (@separator-style = true){ text-align : center; }
+
+    // Separator circle
+    &.circle when (@separator-circle = true) and (@separator-style = true){
+        zoom : 1;
+
+        &:before{
+            padding    : .5em;
+            background : @hr-color;
+            color      : #fff;
+            top        : -1em;
+            .border-radius(2em);
+        }
+    }
+}

@@ -1,0 +1,440 @@
+// Activate elements
+//==================================================
+@import "activate-elements";
+
+// Size toaster popup
+//==================================================
+@tpopup-base-width    : 960px;
+@tpopup-base-height   : 560px;
+@tpopup-medium-width  : 720px;
+@tpopup-medium-height : 480px;
+@tpopup-small-width   : 480px;
+@tpopup-small-height  : 360px;
+
+// Responsive
+//==================================================
+@responsive-size-big-screen : 1200px;
+@responsive-size-desktop    : 1024px;
+@responsive-size-tablet     : 768px;
+@responsive-size-mobile     : 480px;
+@responsive-size-phone      : 320px;
+
+@responsive-column-tablet : 2;
+@responsive-column-mobile : 1;
+
+// Fonts
+//==================================================
+@icon-family          : 'system-icons';
+@font-family-text     : Arial, Helvetica, "Helvetica Neue", sans-serif;
+@font-family-headings : @font-family-text;
+
+@font-size-larger     : 1.5em;
+@font-size-large      : 1.25em;
+@font-size-base       : 14px;
+@font-size-small      : 0.85em;
+@font-size-mini       : 0.75em;
+
+// Icons size
+//==================================================
+@icon-prefix : ticon;
+
+@icon-size-larger : 24px;
+@icon-size-large  : 19px;
+@icon-size-base   : 16px;
+@icon-size-small  : 11px;
+
+@social-icon-size : 20px;
+
+// Grid Base
+//==================================================
+//Width for container
+@grid-container-width : 100%;
+// Number of columns in the grid system
+@grid-columns         : 12;
+@grid-columns-tablet  : 6;
+@grid-columns-mobile  : 4;
+
+// Margin, to be divided by two and applied to the left and right of all columns
+@grid-margin-width    : 4%;
+
+// Column Base
+//==================================================
+// Number of columns in the column system
+@columns           : @grid-columns;
+@columns-tablet    : @grid-columns-tablet;
+@columns-mobile    : @grid-columns-mobile;
+
+// Margin, to be divided by two and applied to the left and right of all columns
+@column-margin-width : 2%;
+
+//Grays
+//==================================================
+@gray-darker  : #111;
+@gray-dark    : #333;
+@gray         : #666;
+@gray-light   : #eaeaea;
+@gray-lighter : #fafafa;
+
+// Brand Color
+//==================================================
+@brand-primary : #31B0D5;
+@brand-success : #2ECC71;
+@brand-info    : #3498DB;
+@brand-warning : #E67E22;
+@brand-error   : #E74C3C;
+
+// Social Color
+//==================================================
+@facebook  : #3B5A99;
+@twitter   : #1AA8E0;
+@gplus     : #CA3E2D;
+@rss       : #FE9900;
+@linkedin  : #4875B5;
+@youtube   : #B72D24;
+@pinterest : #B72D24;
+
+//main color website
+// IS USED BY DEFAULT for: @nav-bg, @state-primary (alerts, message, table coloring, datepicker, progressbar, range), @btn-primary, @tabs-nav-li-bg, @dialog-header-bg, @text-select-bg
+@primary-bg              : @brand-primary;
+//the color of the text relative to the main site colors
+@primary-color           : #FFF;
+
+// Scaffolding
+//==================================================
+@body-bg                 : #FFF;
+@text-color              : @gray-dark;
+@line-height             : 1.428571429;
+
+@text-select-bg          : @primary-bg;
+@text-select-color       : @primary-color;
+
+// variables for Header
+@header-bg               : @gray-light;
+@header-color            : @gray;
+@header-height           : 40px;
+
+@header-inner-bg         : #aaa;
+@header-inner-color      : #fff;
+
+// variables for Main Menu
+@nav-height               : 35px;
+
+@nav-bg                   : @primary-bg;
+@nav-bg-hover             : darken(@nav-bg, 20%);
+@nav-bg-current           : @nav-bg-hover;
+
+@nav-color                : @primary-color;
+@nav-color-hover          : @nav-color;
+@nav-color-current        : @nav-color-hover;
+
+@nav-drop-down-list-bg            : #fff;
+@nav-drop-down-list-bg-hover      : @gray-lighter;
+@nav-drop-down-list-bg-current    : @nav-drop-down-list-bg-hover;
+@nav-drop-down-list-color         : @text-color;
+@nav-drop-down-list-color-hover   : @nav-drop-down-list-color;
+@nav-drop-down-list-color-current : @nav-drop-down-list-color-hover;
+
+// variables for Content
+@content-bg               : #fff;
+@content-color            : @text-color;
+
+// variables for Footer
+@footer-bg                : darken(@gray, 25%);
+@footer-color             : @gray;
+@footer-heading-color     : @gray-lighter;
+
+// Links
+//==================================================
+@link-color         : #59a5c3;
+@link-color-hover   : darken(@link-color, 15%);
+@link-color-active  : @link-color-hover;
+@link-color-visited : @link-color; // look typography.less line 16
+
+// Heading
+//==================================================
+@heading-color    : #4c4c4c;
+@heading-weight   : bold;
+@subheading-color : @gray;
+
+// Components
+//==================================================
+@padding-larger-vertical   : 12px;
+@padding-larger-horizontal : 18px;
+
+@padding-large-vertical    : 10px;
+@padding-large-horizontal  : 16px;
+
+@padding-base-vertical     : 6px;
+@padding-base-horizontal   : 12px;
+
+@padding-small-vertical    : 4px;
+@padding-small-horizontal  : 8px;
+
+@padding-mini-vertical     : 2px;
+@padding-mini-horizontal   : 6px;
+
+@border-radius-small       : 0.25em;
+@border-radius-base        : 0.5em;
+@border-radius-large       : 0.75em;
+@border-radius-larger      : 1.25em;
+
+@hr-size                   : 1px;
+@hr-color                  : @gray-light;
+
+// Form states and alerts
+// IS USED BY DEFAULT for: alerts, message, table coloring, datepicker, progressbar, range
+//==================================================
+@state-border-radius  : 0;
+
+@state-primary-bg     : lighten(softlight(@brand-primary, #FFF), 25%);
+@state-primary-color  : average(@brand-primary, #000);
+@state-primary-border : darken(@state-primary-bg, 10%);
+
+@state-success-bg     : lighten(softlight(@brand-success, #FFF), 25%);
+@state-success-color  : average(@brand-success, #000);
+@state-success-border : darken(@state-success-bg, 10%);
+
+@state-info-bg        : lighten(softlight(@brand-info, #FFF), 25%);
+@state-info-color     : average(@brand-info, #000);
+@state-info-border    : darken(@state-info-bg, 10%);
+
+@state-warning-bg     : lighten(softlight(@brand-warning, #FFF), 25%);
+@state-warning-color  : average(@brand-warning, #000);
+@state-warning-border : darken(@state-warning-bg, 10%);
+
+@state-error-bg       : lighten(softlight(@brand-error, #FFF), 25%);
+@state-error-color    : average(@brand-error, #000);
+@state-error-border   : darken(@state-error-bg, 10%);
+
+// Tables
+//==================================================
+@table-bg           : transparent;
+// overall background-color
+@table-row-bg       : @gray-lighter;
+// is used in .table-striped
+@table-row-bg-hover : @table-row-bg;
+// for hover
+@table-border-color : darken(@gray-light, 5%);
+// table and cell border
+
+// Buttons
+//==================================================
+@button-line-height    : 1.33;
+
+@button-border-width   : 0;
+
+@button-border-radius  : 0; //Enter in ems
+
+@button-primary-bg     : @primary-bg;
+@button-primary-color  : @primary-color;
+@button-primary-border : softlight(@primary-bg, #000);
+
+@button-success-bg     : @brand-success;
+@button-success-color  : #FFF;
+@button-success-border : softlight(@brand-success, #000);
+
+@button-warning-bg     : @brand-warning;
+@button-warning-color  : #FFF;
+@button-warning-border : softlight(@brand-warning, #000);
+
+@button-error-bg       : @brand-error;
+@button-error-color    : #FFF;
+@button-error-border   : softlight(@brand-error, #000);
+
+@button-info-bg        : @brand-info;
+@button-info-color     : #FFF;
+@button-info-border    : softlight(@brand-info, #000);
+
+// Forms
+//==================================================
+@label-color              : #888;
+
+@input-color              : darken(@link-color, 15%);
+
+@input-bg                 : #fff;
+@input-bg-disabled        : @gray-light;
+
+@input-border-width       : 1px;
+@input-border-color       : #ccc;
+//border color and shadow in focus
+@input-border-color-focus : @primary-bg;
+@input-border-radius      : 0;
+//Do you need a shadow on focus? (true / false)
+@input-shadow-focus       : true;
+@input-shadow-size        : 5px;
+
+@input-color-placeholder  : #CCC;
+
+@checkbox-radio-width     : 16px;
+
+// Slide Show
+//==================================================
+@slider-height         : 350px;
+@slider-button-size    : 18px;
+// color headings in slide description
+@slider-heading-color  : @gray-lighter;
+
+// Thumbnails
+//==================================================
+@thumbnail-bg              : #fff;
+@thumbnail-padding         : 2px;
+
+@thumbnail-border-width    : 1px;
+@thumbnail-border-color    : @gray-light;
+@thumbnail-border-radius   : 0;
+
+//Do you need a shadow on hover? (true / false)
+@thumbnail-shadow-hover    : true;
+@thumbnail-color-hover     : @gray;
+
+@thumbnail-caption-bg      : @primary-bg;
+@thumbnail-caption-color   : @primary-color;
+@thumbnail-caption-opacity : 0.8;
+
+// Breadcrumbs
+//==================================================
+@breadcrumbs-color            : @text-color;
+@breadcrumbs-link-color       : @link-color;
+@breadcrumbs-link-color-hover : @link-color-hover;
+
+// JQuery Modules Style
+//==================================================
+// Accordion       http://jqueryui.com/accordion/
+// Tabs            http://jqueryui.com/tabs/
+// Dialog          http://jqueryui.com/dialog/
+// Datepicker      http://jqueryui.com/datepicker/
+// Autocomplete    http://jqueryui.com/autocomplete/
+// Tooltip         http://jqueryui.com/tooltip/
+// Slider (range)  http://jqueryui.com/slider/
+// Progressbar     http://jqueryui.com/progressbar/
+//==================================================
+
+// JQuery Modules Accordion = http://jqueryui.com/accordion/
+//=============================================================
+@accordion-header-bg            : @gray-light;
+@accordion-header-color         : @gray;
+
+@accordion-header-bg-hover      : darken(@accordion-header-bg, 10%);
+@accordion-header-color-hover   : @accordion-header-color;
+
+@accordion-header-bg-active     : darken(@accordion-header-bg, 10%);
+@accordion-header-color-active  : @accordion-header-color;
+
+@accordion-content-bg           : @body-bg;
+@accordion-content-border-width : 1px;
+@accordion-content-border-color : @accordion-header-bg-active;
+
+// CPanel Accordion
+//==================================================
+@cpanel-header-bg           : @gray;
+@cpanel-header-color        : #fff;
+
+@cpanel-header-bg-hover     : darken(@cpanel-header-bg, 5%);
+@cpanel-header-color-hover  : @cpanel-header-color;
+
+@cpanel-header-bg-active    : darken(@cpanel-header-bg, 5%);
+@cpanel-header-color-active : @cpanel-header-color;
+
+@cpanel-subtitle-bg         : #eee;
+@cpanel-content-bg          : #fff;
+
+// JQuery Modules Tabs = http://jqueryui.com/tabs/
+//=============================================================
+@tabs-nav-bg              : @gray-light;
+@tabs-nav-li-bg           : transparent;
+@tabs-nav-li-color        : @gray;
+
+@tabs-nav-li-bg-hover     : darken(@tabs-nav-bg, 5%);
+@tabs-nav-li-color-hover  : @tabs-nav-li-color;
+
+@tabs-nav-li-bg-active    : @body-bg;
+@tabs-nav-li-color-active : @tabs-nav-li-color;
+
+@tabs-container-bg        : @body-bg;
+
+// JQuery Modules Dialog = http://jqueryui.com/dialog/
+//=============================================================
+@dialog-bg           : @body-bg;
+@dialog-border-color : darken(@primary-bg, 5%);
+@dialog-border-width : 0px;
+
+@dialog-header-bg    : @header-bg;
+@dialog-header-color : @header-color;
+
+@dialog-content-bg   : transparent;
+
+@dialog-resizable    : false;
+
+// JQuery Modules Datepicker = http://jqueryui.com/datepicker/
+//==================================================
+@datepicker-bg                : #fff;
+@datepicker-border-color      : #DDD;
+@datepicker-width             : 210px;
+
+@datepicker-header-bg         : @header-bg;
+@datepicker-header-color      : @header-color;
+@datepicker-header-size       : 16px;
+@datepicker-header-height     : 30px;
+
+@datepicker-arrow-bg          : @datepicker-header-bg;
+@datepicker-arrow-color       : @datepicker-header-color;
+@datepicker-arrow-size        : 14px;
+
+@datepicker-week-bg           : @datepicker-header-bg;
+@datepicker-week-color        : @datepicker-header-color;
+@datepicker-week-end-color    : desaturate(@brand-error, 20%);
+@datepicker-week-box-size     : 30px;
+@datepicker-week-font-size    : 10px;
+
+@datepicker-day-bg            : transparent;
+@datepicker-day-color         : @datepicker-header-color;
+@datepicker-day-box-size      : 30px;
+@datepicker-day-font-size     : @font-size-mini;
+
+@datepicker-today-bg          : @state-primary-bg;
+@datepicker-today-color       : @state-primary-color;
+@datepicker-current-day-bg    : @gray-light;
+@datepicker-current-day-color : @gray;
+
+// JQuery Modules Autocomplete = http://jqueryui.com/autocomplete/
+//=============================================================
+@autocomplete-bg               : @input-bg;
+@autocomplete-color            : @text-color;
+@autocomplete-item-bg-hover    : @primary-bg;
+@autocomplete-item-color-hover : @primary-color;
+
+// JQuery Modules Tooltip = http://jqueryui.com/tooltip/
+//=============================================================
+@tooltip-bg    : #000;
+@tooltip-color : #fff;
+@tooltip-border-color : @tooltip-bg;
+@tooltip-border-width : 0;
+@tooltip-width : 300px;
+// and need to change the value in the function functionPack => showTooltip (), variable arrowWidth
+@tooltip-arrow-width  : 9px;
+
+// JQuery Modules Slider (range) = http://jqueryui.com/slider/
+//=============================================================
+@range-size         : 16px;
+@range-bg           : #FFF;
+@range-value        : @state-primary-bg;
+@range-border-color : @state-primary-border;
+@range-handle-bg    : @state-primary-color;
+
+// JQuery Modules Progressbar = http://jqueryui.com/progressbar/
+//=============================================================
+@progressbar-size         : 18px;
+@progressbar-bg           : #FFF;
+@progressbar-value        : @brand-primary;
+@progressbar-border-color : @input-border-color;
+
+// ScrollBars = http://codemug.com/html/custom-scrollbars-using-css/
+//=============================================================
+@scrollbar-size             : 10px;
+@scrollbar-bg               : @gray-light;
+@scrollbar-slider-button-bg : darken(@scrollbar-bg, 10%);
+@scrollbar-resize-color     : darken(@scrollbar-bg, 10%);
+
+// Mixin
+//==================================================
+@import "mixins-pack";

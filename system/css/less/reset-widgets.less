@@ -1,0 +1,77 @@
+@import "base/variables";
+
+// Plugins list
+//==================================================
+.plugins-list{
+    overflow : auto;
+    height   : 392px;
+
+    .plugin-item{
+        position      : relative;
+        float         : left;
+        margin-top    : 1%;
+        margin-bottom : 1%;
+        padding       : 0;
+        overflow      : hidden;
+        .box-shadow(4px 4px 3px #bbb);
+        .grid-elements(5, 2, true);
+
+        &:hover{
+            .readme-plugin, .del-plugin{
+                .opacity(1);
+            }
+
+            .plugin-name{
+            }
+        }
+
+        .readme-plugin, .del-plugin{
+            z-index    : 7;
+            text-align : center;
+            .opacity(0);
+            .transition;
+        }
+
+        .readme-plugin{
+            color : #fff;
+        }
+
+        .del-plugin{
+            color : #f44645;
+        }
+
+        .plugin-name{
+            position   : relative;
+            z-index    : 5;
+            background : #2d82a3;
+            margin     : 0;
+            color      : #fff;
+            padding    : @padding-small-vertical 0 @padding-small-vertical @padding-small-horizontal;
+            .text-overflow;
+            .box-shadow(0 1px 10px #206887);
+        }
+        .plugin-image{
+            height   : 129px;
+            overflow : hidden;
+            position : relative;
+        }
+        .plugin-control{
+            .button-color(@button-error-color, desaturate(@button-error-bg, 25%), desaturate(@button-error-border, 25%));
+
+            &.block{
+                .button-color(@button-success-color, @button-success-bg, @button-success-border);
+            }
+        }
+        .plugin-endis{
+            .button-color(#fff, #2d81a2, #2d81a2);
+
+            &.disable{
+                .button-color(darken(@gray-light, 40%), darken(@gray-light, 10%), @gray-light);
+            }
+        }
+    }
+}
+
+// ... Styles
+//==================================================
+

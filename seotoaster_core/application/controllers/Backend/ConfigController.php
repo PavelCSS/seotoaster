@@ -10,7 +10,7 @@ class Backend_ConfigController extends Zend_Controller_Action {
 	public function  init() {
 		parent::init();
 		if(!Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_CONFIG)) {
-			$this->_redirect($this->_helper->website->getUrl(), array('exit' => true));
+			$this->redirect($this->_helper->website->getUrl(), array('exit' => true));
 		}
 		$this->view->websiteUrl  = $this->_helper->website->getUrl();
 		$this->_websiteConfig	 = Zend_Registry::get('website');
@@ -33,32 +33,50 @@ class Backend_ConfigController extends Zend_Controller_Action {
 		$isSuperAdminLogged = ($loggedUser->getRoleId() === Tools_Security_Acl::ROLE_SUPERADMIN);
 		$this->view->isSuperAdmin = $isSuperAdminLogged;
 
-		if (!$isSuperAdminLogged) {
-			$configForm->removeElement('suLogin');
-			$configForm->removeElement('suPassword');
-		} else {
-			//initializing current superadmin user
-			$userTable = new Application_Model_DbTable_User();
-			$userMapper = Application_Model_Mappers_UserMapper::getInstance();
-		}
+		if ($this->getRequest()->isPost()) {
+            if (!$isSuperAdminLogged) {
+                $configForm->removeElement('suLogin');
+                $configForm->removeElement('suPassword');
+                $configForm->removeElement('canonicalScheme');
+                $configForm->removeElement('recapthaPublicKey');
+                $configForm->removeElement('recapthaPrivateKey');
+            }
+            else {
+                //initializing current superadmin user
+                $userTable  = new Application_Model_DbTable_User();
+                $userMapper = Application_Model_Mappers_UserMapper::getInstance();
+            }
 
-		if ($this->getRequest()->isPost()){
-			if ($configForm->isValid($this->getRequest()->getParams())){
+			if ($configForm->isValid($this->getRequest()->getParams())) {
 				//proccessing language changing
 				$selectedLang = $languageSelect->getValue();
 				if ($selectedLang != $this->_helper->language->getCurrentLanguage()) {
 					$this->_helper->language->setLanguage($selectedLang);
                     $languageSelect->setMultiOptions($this->_helper->language->getLanguages(false));
 				}
-				if ( $isSuperAdminLogged ) {
+				if ($isSuperAdminLogged) {
+                    // Update modified templates in developer mode and clean concatcss cache
+                    if (!((bool) $configForm->getElement('enableDeveloperMode')->getValue())
+                        && (bool) $this->_helper->config->getConfig('enableDeveloperMode')
+                    ) {
+                        try {
+                            Tools_Theme_Tools::applyTemplates($this->_helper->config->getConfig('currentTheme'), true);
+                            $this->_helper->cache->clean(false, false, array('concatcss'));
+                        }
+                        catch (Exception $e) {
+                            $e->getMessage();
+                        }
+                    }
+
 					$newPass	= $configForm->getElement('suPassword')->getValue();
 					$newLogin	= $configForm->getElement('suLogin')->getValue();
 					$adminDataModified = false;
+                    // checking if there is new su password
 					if (!empty($newPass) && md5($newPass) !== $loggedUser->getPassword() ){
 						$loggedUser->setPassword($newPass);
 						$adminDataModified = true;
 					}
-
+                    // checking if su email has been changed
 					if ($newLogin != $loggedUser->getEmail()) {
 						$usersWithSuchEmail = $userTable->fetchAll( $userTable->getAdapter()->quoteInto('email = ?', $newLogin) );
 						if (! $usersWithSuchEmail->count() ) {
@@ -132,27 +150,10 @@ class Backend_ConfigController extends Zend_Controller_Action {
 
 		$this->view->messages = $this->_helper->flashMessenger->getMessages();
 		$this->view->configForm = $configForm;
-
-		$triggers = Application_Model_Mappers_EmailTriggersMapper::getInstance()->getTriggers(true);
-		$this->view->triggers = array_combine($triggers, $triggers);
-		array_unshift($this->view->triggers,  'select trigger');
-		$recipients = Application_Model_Mappers_EmailTriggersMapper::getInstance()->getReceivers(true);
-		$this->view->recipients = array_combine($recipients, $recipients);
-		array_unshift($this->view->recipients,  'select recipient');
-
-		$templates = Application_Model_Mappers_TemplateMapper::getInstance()->findByType(Application_Model_Models_Template::TYPE_MAIL);
-		$this->view->templates = array('select template');
-		if (!empty($templates)){
-			foreach ($templates as $tmpl) {
-				$this->view->templates[$tmpl->getName()] = $tmpl->getName();
-			}
-		}
-
-		$this->view->actions = Application_Model_Mappers_EmailTriggersMapper::getInstance()->fetchArray();
 	}
 
     /**
-     * Action for alter mail messasge before sending
+     * Action for alter mail message before sending
      *
      * @return bool
      * @throws Exceptions_SeotoasterException
@@ -204,11 +205,12 @@ class Backend_ConfigController extends Zend_Controller_Action {
         $pluginsTriggers = Tools_Plugins_Tools::fetchPluginsTriggers();
         $systemTriggers  = Tools_System_Tools::fetchSystemtriggers();
         $triggers        = is_array($pluginsTriggers) ? array_merge($systemTriggers, $pluginsTriggers) : $systemTriggers;
-
+        $services        = array('email' => 'e-mail', 'sms' => 'sms');
         $recipients                 = Application_Model_Mappers_EmailTriggersMapper::getInstance()->getReceivers(true);
         $this->view->recipients     = array_combine($recipients, $recipients);
         $this->view->mailTemplates  = Tools_Mail_Tools::getMailTemplatesHash();
         $this->view->triggers       = $triggers;
+        $this->view->services       = $services;
         $this->view->actionsOptions = array_merge(array('0' => $this->_helper->language->translate('Select event area')), array_combine(array_keys($triggers), array_map(function($trigger) {
             return str_replace('-', ' ', ucfirst($trigger));
         }, array_keys($triggers))));

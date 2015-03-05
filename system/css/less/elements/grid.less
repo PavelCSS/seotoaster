@@ -1,0 +1,113 @@
+.container{
+    position     : relative;
+    margin-left  : auto;
+    margin-right : auto;
+    .activate-container-style() when (@responsive = false) and not (@grid-container-width = 100%){
+        width : @grid-container-width;
+    }
+    .activate-container-style() when (@responsive = true) and not (@grid-container-width = 100%){
+        width     : 90%;
+        max-width : @grid-container-width;
+    }
+    .activate-container-style();
+    .clearfix-mixin();
+}
+
+// GRID CSS
+//==================================================
+[class*=" grid_"], [class^="grid_"], [class*="-grid_"], [class*="_grid_"]{
+    & when (@grid-system = true){
+        display      : inline;
+        float        : left;
+        position     : relative;
+        width        : 100% - @grid-margin-width;
+        margin-left  : (@grid-margin-width / 2) !important;
+        margin-right : (@grid-margin-width / 2) !important;
+    }
+}
+.grid();
+
+// COLUMN LIST CSS
+//==================================================
+.column();
+[class*=" column_"], [class^="column_"], [class*="-column_"], [class*="_column_"]{
+    & when (@column-system = true){
+        font-size : 0 !important;
+        width     : 100%;
+
+        & > *{
+            font-size      : @font-size-base;
+            float          : none !important;
+            display        : inline-block;
+            vertical-align : top;
+            width          : 100% - @column-margin-width;
+            margin-left    : (@column-margin-width / 2) !important;
+            margin-right   : (@column-margin-width / 2) !important;
+            margin-bottom  : @column-margin-width;
+        }
+
+        fieldset& > *{
+            margin-top : 0;
+        }
+
+        &.bottom{
+            & > *{
+                vertical-align : bottom;
+            }
+        }
+
+        &.middle{
+            & > *{
+                vertical-align : middle;
+            }
+        }
+
+        &.full-width when (@column-system-fullWidth = true){
+            & > *{
+                width        : 100%;
+                margin-right : @column-margin-width !important;
+                margin-left  : 0 !important;
+            }
+        }
+
+        &.margin-none when (@column-system-marginNone = true){
+            & > *{
+                width        : 100%;
+                margin-left  : 0 !important;
+                margin-right : 0 !important;
+            }
+        }
+
+        &.one-line{
+            & > *{
+                margin-bottom : 0;
+            }
+        }
+
+        .column-none, .spinner{
+            width : auto !important;
+        }
+
+        & > .generator-links{ display : block; }
+
+        & > .larger{
+            font-size : @font-size-base * @font-size-larger !important;
+        }
+
+        & > .large{
+            font-size : @font-size-base * @font-size-large !important;
+        }
+
+        & > .small{
+            font-size : @font-size-base * @font-size-small !important;
+        }
+    }
+}
+
+.clear{
+    display    : block;
+    clear      : both;
+    overflow   : hidden;
+    visibility : hidden;
+    height     : 0;
+}

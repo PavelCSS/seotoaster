@@ -1,13 +1,28 @@
 <?php
 
 /**
- * List
+ * List widget. Creates a list of categories or list of pages that you have on your website.
+ * {$list:categories} - return list of pages in main menu category
+ * {$list:pages:[:category_name|img|imgc|crop|ajax|class='class']} - return list of pages by category name
  *
- * @author Eugene I. Nezhuta [Seotoaster Dev Team] <eugene@seotoaster.com>
+ * category_name - page category name
+ * img - with page preview image
+ * imgc - with page preview crop image
+ * ajax - ajax content loading
+ * class - add class
+ *
+ * Class Widgets_List_List
  */
 class Widgets_List_List extends Widgets_Abstract {
 
-	protected function  _init() {
+    /**
+     * Exclude options for list pages widget
+     *
+     * @var array
+     */
+    protected $_excludeOptions = array('img', 'imgc', 'crop', 'ajax');
+
+    protected function  _init() {
 		parent::_init();
 		$this->_view = new Zend_View(array(
 			'scriptPath' => dirname(__FILE__) . '/views'
@@ -17,7 +32,11 @@ class Widgets_List_List extends Widgets_Abstract {
         array_push($this->_cacheTags, __CLASS__);
 	}
 
-	protected function  _load() {
+    /**
+     * @return mixed
+     * @throws Exceptions_SeotoasterException
+     */
+    protected function  _load() {
 		$listType     = $this->_options[0];
 		$rendererName = '_render' . ucfirst($listType) . 'List';
 		if(method_exists($this, $rendererName)) {
@@ -26,43 +45,46 @@ class Widgets_List_List extends Widgets_Abstract {
 		throw new Exceptions_SeotoasterException('Can not render <strong>' . $listType . '</strong> list.');
 	}
 
-	private function _renderCategoriesList() {
-		$this->_view->categoriesList = Application_Model_Mappers_PageMapper::getInstance()->findByParentId(0);
-		$this->_view->useImage       = (isset($this->_options[1]) && $this->_options[1]) ? true : false;
-		$this->_view->crop           = (isset($this->_options[2]) && $this->_options[2]) ? true : false;
+    /**
+     * Render category pages list
+     *
+     * @return string
+     */
+    private function _renderCategoriesList() {
+		$this->_view->categoriesList = Application_Model_Mappers_PageMapper::getInstance()->fetchMainCategories();
+        $this->_view->useImage       = (in_array('img', $this->_options) || in_array('imgc', $this->_options)) ? true : false;
+        $this->_view->crop           = (in_array('imgc', $this->_options) || in_array('crop', $this->_options)) ? true : false;
+        $class                       = current(preg_grep('/class=*/', $this->_options));
+        $this->_view->listClass      = ($class !== null) ? preg_replace('/class=/', '', $class) : '';
 		$this->_addCacheTags($this->_view->categoriesList);
 		return $this->_view->render('categories.phtml');
 	}
 
-	private function _renderPagesList() {
-		return (isset($this->_options[1]) && $this->_options[1] !== 'img' && $this->_options[1] !== 'ajax') ? $this->_renderPagesListByCategoryName() : $this->_renderCurrentCategoryPagesList();
-	}
-
-	private function _renderCurrentCategoryPagesList() {
-		$categoryName = $this->_toasterOptions['navName'];
-		$this->_view->pagesList = $this->_findPagesListByCategoryName($categoryName);
-		$this->_view->useImage  = (isset($this->_options[1]) && $this->_options[1] === 'img') ? true : false;
-		$this->_view->crop      = (isset($this->_options[2]) && $this->_options[2] === 'crop') ? true : false;
-        if(end($this->_options) == 'ajax') {
-            $this->_view->ajax = true;
-        } else {$this->_view->ajax = false;}
-        $this->_view->pageId = $this->_toasterOptions['id'];
-		$this->_addCacheTags($this->_view->pagesList);
-		return $this->_view->render('pages.phtml');
-	}
-
-	private function _renderPagesListByCategoryName() {
-		$categoryName = $this->_options[1];
-		$this->_view->pagesList = $this->_findPagesListByCategoryName($categoryName);
-		$this->_view->useImage  = (isset($this->_options[2]) && $this->_options[2] === 'img') ? true : false;
-		$this->_view->crop      = (isset($this->_options[3]) && $this->_options[3] === 'crop') ? true : false;
+    /**
+     * Render category pages list by category name
+     *
+     * @return string
+     */
+    private function _renderPagesList() {
+        $key = key(preg_grep('/class=*/', $this->_options));
+        if(isset($this->_options[1]) && !in_array($this->_options[1], $this->_excludeOptions) && $key !== 1){
+            $categoryName = $this->_options[1];
+        } else{
+            $categoryName = $this->_toasterOptions['navName'];
+        }
+        $this->_view->pagesList = $this->_findPagesListByCategoryName($categoryName);
+        $this->_view->useImage  = (in_array('img', $this->_options) || in_array('imgc', $this->_options)) ? true : false;
+        $this->_view->crop      = (in_array('imgc', $this->_options) || in_array('crop', $this->_options)) ? true : false;
+        $class                  = current(preg_grep('/class=*/', $this->_options));
+        $this->_view->listClass = ($class !== null) ? preg_replace('/class=/', '', $class) : '';
+        $this->_view->ajax = false;
         if(end($this->_options) == 'ajax') {
             $this->_view->ajax = true;
             $this->_view->categoryName = $categoryName;
-        } else {$this->_view->ajax = false;}
+        }
         $this->_view->pageId = $this->_toasterOptions['id'];
-		$this->_addCacheTags($this->_view->pagesList);
-		return $this->_view->render('pages.phtml');
+        $this->_addCacheTags($this->_view->pagesList);
+        return $this->_view->render('pages.phtml');
 	}
 
 	private function _findPagesListByCategoryName($categoryName) {
@@ -74,7 +96,12 @@ class Widgets_List_List extends Widgets_Abstract {
 		return Application_Model_Mappers_PageMapper::getInstance()->findByParentId(($page->getParentId() > 0) ? $page->getParentId() : $page->getId());
 	}
 
-	private function _addCacheTags($pagesList){
+    /**
+     * Add cache tags for each page in list
+     *
+     * @param $pagesList
+     */
+    private function _addCacheTags($pagesList){
 		if (is_array($pagesList) && !empty($pagesList)){
 			foreach ($pagesList as $page) {
 				array_push($this->_cacheTags, 'pageid_'.$page->getId());
@@ -82,7 +109,12 @@ class Widgets_List_List extends Widgets_Abstract {
 		}
 	}
 
-	public static function getAllowedOptions() {
+    /**
+     * Options for widget maker
+     *
+     * @return array
+     */
+    public static function getAllowedOptions() {
 		$translator = Zend_Registry::get('Zend_Translate');
 		return array(
 			array(
@@ -94,6 +126,10 @@ class Widgets_List_List extends Widgets_Abstract {
 				'option' => 'list:categories:img'
 			),
 			array(
+				'alias'  => $translator->translate('List all categories (with crop images)'),
+				'option' => 'list:categories:imgc'
+			),
+			array(
 				'alias'  => $translator->translate('List all pages for current category'),
 				'option' => 'list:pages'
 			),
@@ -102,16 +138,22 @@ class Widgets_List_List extends Widgets_Abstract {
 				'option' => 'list:pages:img'
 			),
 			array(
+				'alias'  => $translator->translate('List all pages for current category (with crop images)'),
+				'option' => 'list:pages:imgc'
+			),
+			array(
 				'alias'  => $translator->translate('List all pages for category'),
 				'option' => 'list:pages:category_name'
 			),
 			array(
 				'alias'  => $translator->translate('List all pages for category (with images)'),
 				'option' => 'list:pages:category_name:img'
+			),
+			array(
+				'alias'  => $translator->translate('List all pages for category (with crop images)'),
+				'option' => 'list:pages:category_name:imgc'
 			)
 		);
 
-		//return array('list:categories', 'list:categories:img', 'list:pages', 'list:pages:img', 'list:pages:category_name', 'list:pages:category_name:img');
 	}
 }
-

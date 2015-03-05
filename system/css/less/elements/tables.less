@@ -1,0 +1,247 @@
+// BASELINE STYLES
+//==================================================
+table{
+    width            : 100%;
+    background-color : @table-bg;
+
+    th, td{
+        padding        : .5em .75em;
+        border-top     : 1px solid @table-border-color;
+        vertical-align : middle;
+    }
+
+    th{
+        border-top     : 0;
+        vertical-align : bottom;
+        text-align     : left;
+    }
+
+    td{
+        &:first-child{
+            vertical-align : top;
+        }
+    }
+
+    thead{
+        background-color : @header-inner-bg;
+        color            : @header-inner-color;
+    }
+
+    // Account for multiple tbody instances
+    tbody + tbody{
+        border-top : 2px solid @table-border-color;
+    }
+
+    // Nesting
+    table{
+        background-color : #fff;
+    }
+
+    // BORDERED VERSION
+    //==================================================
+    &.table-bordered when (@table-bordered = true) and (@table-styles = true){
+        border          : 1px solid @table-border-color;
+        border-collapse : separate; // Done so we can round those corners!
+        border-left     : 0;
+
+        tr > th,
+        tr > td{
+            border-left : 1px solid @table-border-color;
+        }
+    }
+
+    // ZEBRA-STRIPING
+    //==================================================
+    // Default zebra-stripe styles (alternating gray and transparent backgrounds)
+    &.table-striped when (@table-striped = true) and (@table-styles = true){
+
+        tr > td{
+            border-top : 0;
+        }
+        & > tr:nth-child(even) > td, tbody tr:nth-child(odd) > td{
+            background-color : @table-row-bg;
+        }
+    }
+
+    // HOVER EFFECT
+    //==================================================
+    // Placed here since it has to come after the potential zebra striping
+    &.table-hover when (@table-hover = true) and (@table-styles = true){
+
+        thead, tfoot{
+            tr:hover, td:hover{
+                background : inherit;
+            }
+        }
+
+        tr:hover, td:hover{
+            background-color : @table-row-bg-hover;
+
+            &.primary when (@colors = true){
+                background-color : darken(@state-primary-bg, 5%);
+                border-color     : darken(@state-primary-border, 5%);
+            }
+            &.success when (@color-success = true) and (@colors = true){
+                background-color : darken(@state-success-bg, 5%);
+                border-color     : darken(@state-success-border, 5%);
+            }
+            &.error when (@color-error = true) and (@colors = true){
+                background-color : darken(@state-error-bg, 5%);
+                border-color     : darken(@state-error-border, 5%);
+            }
+            &.warning when (@color-warning = true) and (@colors = true){
+                background-color : darken(@state-warning-bg, 5%);
+                border-color     : darken(@state-warning-border, 5%);
+            }
+            &.info when (@color-info = true) and (@colors = true){
+                background-color : darken(@state-info-bg, 5%);
+                border-color     : darken(@state-info-border, 5%);
+            }
+        }
+    }
+
+    //  Table responsive
+    //==================================================
+    &.responsive when ( @responsive = true){
+
+        .table-head{
+            display : none;
+        }
+
+        @media only screen and (max-width : @responsive-size-tablet){
+            thead, th{
+                display : none;
+            }
+            td{
+                display : block;
+            }
+            .table-head{
+                display       : block;
+                color         : @brand-primary;
+                border-bottom : 1px dashed @gray-light;
+                margin-bottom : 0.5em;
+            }
+        }
+    }
+
+    &.small{
+        zoom : 1;
+
+        th, td{
+            padding : 5px;
+        }
+    }
+
+    &.large{
+        zoom : 1;
+
+        th, td{
+            padding : @padding-large-vertical;
+        }
+    }
+
+    &.larger{
+        zoom : 1;
+
+        th, td{
+            padding : @padding-large-vertical;
+        }
+    }
+}
+
+// TABLE BACKGROUNDS
+// -----------------
+// Exact selectors below required to override .table-striped
+tr, td{
+    &.primary when (@colors = true){
+        color            : @text-color;
+        background-color : @state-primary-bg;
+        border-color     : @state-primary-border;
+        border-bottom    : 1px solid @state-primary-border;
+    }
+    &.success when (@color-success = true) and (@colors = true){
+        color            : @text-color;
+        background-color : @state-success-bg;
+        border-color     : @state-success-border;
+        border-bottom    : 1px solid @state-success-border;
+    }
+    &.error when (@color-error = true) and (@colors = true){
+        color            : @text-color;
+        background-color : @state-error-bg;
+        border-color     : @state-error-border;
+        border-bottom    : 1px solid @state-error-border;
+    }
+    &.warning when (@color-warning = true) and (@colors = true){
+        color            : @text-color;
+        background-color : @state-warning-bg;
+        border-color     : @state-warning-border;
+        border-bottom    : 1px solid @state-warning-border;
+    }
+    &.info when (@color-info = true) and (@colors = true){
+        color            : @text-color;
+        background-color : @state-info-bg;
+        border-color     : @state-info-border;
+        border-bottom    : 1px solid @state-info-border;
+    }
+}
+
+//  Table scroll
+//==================================================
+.table-scroll{
+    overflow : auto;
+    position : relative;
+    display  : block;
+
+    thead{
+        background-color : @header-inner-bg;
+        color            : @header-inner-color;
+        display          : block;
+    }
+
+    tbody{
+        display  : block;
+        overflow : auto;
+    }
+
+    tr{
+        display  : block;
+        overflow : hidden;
+    }
+
+    th, td{
+        //padding-left  : 0;
+        //padding-right : 0;
+    }
+}
+
+// DataTable
+//==================================================
+.dataTables_wrapper{
+    float : left;
+    width : 100%;
+
+    .dataTables_filter{
+        //margin-bottom : 12px;
+
+        label{
+            width   : 30%;
+            display : block;
+
+            input{
+                width : 75%;
+            }
+        }
+    }
+
+    .dataTable{
+    }
+    .sorting, .sorting_asc, .sorting_desc{
+        cursor : pointer;
+
+        &:after{
+            font-size   : 10px;
+            margin-left : 3px;
+            top         : -1px;
+        }
+    }
+}

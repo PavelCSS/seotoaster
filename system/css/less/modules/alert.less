@@ -1,0 +1,105 @@
+// Alert and Message styles
+// -------------------------
+.smoke-base{
+
+    .smokebg{
+        position : fixed;
+        left     : 0;
+        right    : 0;
+        top      : 0;
+        bottom   : 0;
+        z-index  : 1000;
+        .rgba(#fff, 0.5);
+    }
+
+    .dialog{
+        overflow   : auto;
+        position   : fixed;
+        z-index    : 1001;
+        width      : 100%;
+        max-width  : @grid-container-width * 0.75;
+        max-height : 50%;
+        top        : 25%;
+        left       : 0;
+        right      : 0;
+        margin     : 0 auto;
+        text-align : center;
+        border     : 1px solid;
+        .border-radius(@state-border-radius);
+        .box-shadow(0 0 15px #ccc);
+        .alert-color(@state-primary-color, #fff, #ddd);
+
+        // Alternate styles
+        // -------------------------
+        &.success when (@alert-color-success = true) and (@alert-colors = true){
+            .alert-color(@state-success-color, #fff, @state-success-border);
+        }
+        &.warning when (@alert-color-warning = true) and (@alert-colors = true){
+            .alert-color(@state-warning-color, #fff, @state-warning-border);
+        }
+        &.error when (@alert-color-error = true) and (@alert-colors = true){
+            .alert-color(@state-error-color, #fff, @state-error-border);
+        }
+        &.info when (@alert-color-info = true) and (@alert-colors = true){
+            .alert-color(@state-info-color, #fff, @state-info-border);
+        }
+
+        li{
+            margin     : 0;
+            list-style : none;
+
+            & + li{
+                margin-top : 0.5em;
+            }
+        }
+    }
+
+    .dialog-inner{
+        font-size : @font-size-large;
+        padding   : @padding-larger-vertical @padding-larger-horizontal;
+
+        *{
+            color : inherit;
+        }
+
+        p{ margin : 0 0 0.5em; }
+    }
+
+    .dialog-prompt{
+        margin-top : 0.75em;
+        .clearfix-mixin;
+
+        input, select, textarea{
+            float : none;
+        }
+    }
+
+    .form-errors{
+        max-height : 210px;
+        overflow   : auto;
+    }
+
+    .dialog-buttons{
+        margin-top : 1em;
+        font-size  : @font-size-base;
+
+        button{
+            float  : none;
+            margin : 0 @padding-small-horizontal;
+            .button();
+            .border-radius(@button-border-radius);
+            .button-color(@button-success-color, @button-success-bg, @button-success-border);
+
+            &.cancel{
+                .button-color(@button-error-color, @button-error-bg, @button-error-border);
+            }
+        }
+    }
+}
+
+.ui-state-error{
+    .alert-color(@state-error-color, @state-error-bg, @state-error-border);
+}
+.ui-state-highlight{
+    .alert-color(@state-info-color, @state-info-bg, @state-info-border);
+}

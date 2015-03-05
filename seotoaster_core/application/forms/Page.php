@@ -34,6 +34,10 @@ class Application_Form_Page extends Zend_Form {
 
 	protected $_pageOption      = 0;
 
+    protected $_externalLinkStatus = 0;
+
+    protected $_externalLink = '';
+
 	public function init() {
 		$this->setMethod(Zend_Form::METHOD_POST);
 
@@ -75,25 +79,21 @@ class Application_Form_Page extends Zend_Form {
 			'filters'  => array('StringTrim')
 		)));
 
-		$this->addElement(new Zend_Form_Element_Textarea(array(
-			'name'     => 'metaDescription',
-			'id'       => 'meta-description',
-			'cols'     => '45',
-			'rows'     => '7',
-			'label'    => 'Meta description',
-			'class'    => 'h110',
-			'value'    => $this->_metaDescription,
+		$this->addElement(new Zend_Form_Element_Text(array(
+			'name'     => 'metaKeywords',
+			'id'       => 'meta-keywords',
+			'label'    => 'Meta keywords',
+			'value'    => $this->_metaKeywords,
 			'filters'  => array('StringTrim')
 		)));
 
 		$this->addElement(new Zend_Form_Element_Textarea(array(
-			'name'     => 'metaKeywords',
-			'id'       => 'meta-keywords',
+			'name'     => 'metaDescription',
+			'id'       => 'meta-description',
 			'cols'     => '45',
-			'rows'     => '3',
-			'label'    => 'Meta keywords',
-			'class'    => 'h70',
-			'value'    => $this->_metaKeywords,
+			'rows'     => '4',
+			'label'    => 'Meta description',
+			'value'    => $this->_metaDescription,
 			'filters'  => array('StringTrim')
 		)));
 
@@ -101,10 +101,8 @@ class Application_Form_Page extends Zend_Form {
 			'name'     => 'teaserText',
 			'id'       => 'teaser-text',
 			'cols'     => '45',
-			'rows'     => '3',
-			'label'    => 'Teaser Text',
+			'rows'     => '6',
 			'value'    => $this->_teaserText,
-			'class'    => array('hldd00', 'h130'),
 			'filters'  => array('StringTrim')
 		)));
 
@@ -124,6 +122,7 @@ class Application_Form_Page extends Zend_Form {
 			'name'         => 'pageCategory',
 			'id'           => 'page-category',
 			'label'        => 'Main menu',
+			'class'        => 'mb5px',
 			'multiOptions' => array(
 				'Seotoaster' => array(
 					Application_Model_Models_Page::IDCATEGORY_CATEGORY => 'This page is a category'
@@ -139,7 +138,7 @@ class Application_Form_Page extends Zend_Form {
 		$this->addElement(new Zend_Form_Element_Select(array(
 			'name'         => 'extraOptions',
 			'id'           => 'page-options',
-			'label'        => 'This page is',
+			'class'        => 'grid_8 alpha omega',
 			'multiOptions' => array_merge(array('0' => 'Select an option'), Tools_Page_Tools::getPageOptions(true)),
 			'registerInArrayValidator' => false,
 			'value' => $this->_pageOption
@@ -176,12 +175,40 @@ class Application_Form_Page extends Zend_Form {
 			'value' => $this->_publishAt
 		)));
 
-		$this->addElement(new Zend_Form_Element_Submit(array(
+        $this->addElement(
+            new Zend_Form_Element_Hidden(array(
+                'id' => 'external-link-status',
+                'name' => 'externalLinkStatus',
+                'value' => $this->_externalLinkStatus
+            ))
+        );
+
+        $this->addElement(
+            new Zend_Form_Element_Hidden(array(
+                'id' => 'external-link',
+                'name' => 'externalLink',
+                'value' => $this->_externalLink,
+                'filters' => array(
+                    new Zend_Filter_StringTrim()
+                )
+            ))
+        );
+
+		$this->addElement(new Zend_Form_Element_Button(array(
 			'name'  => 'updatePage',
 			'id'    => 'update-page',
+			'type'  => 'submit',
 			'value' => 'Save page',
-			'label' => 'Save page'
+			'class' => 'btn ticon-save mr-grid',
+			'label' => 'Save page',
+			'escape'=> false
 		)));
+
+        $this->addElement(new Zend_Form_Element_Hidden(array(
+            'id'    => 'removePreviousOption',
+            'name'  => 'removePreviousOption',
+            'value' => $this->_removePreviousOption
+        )));
 
 		//$this->setDecorators(array('ViewScript'));
 		$this->setElementDecorators(array('ViewHelper', 'Label'));
@@ -320,6 +347,30 @@ class Application_Form_Page extends Zend_Form {
 	public function getMainMenuOptions() {
 		return $this->getElement('pageCategory')->getMultiOptions();
 	}
+
+    public function setExternalLinkStatus($externalLinkStatus)
+    {
+        $this->_externalLinkStatus = $externalLinkStatus;
+        $this->getElement('externalLinkStatus')->setValue($externalLinkStatus);
+        return $this;
+    }
+
+    public function getExternalLinkStatus()
+    {
+        return $this->_externalLinkStatus;
+    }
+
+    public function setExternalLink($externalLink)
+    {
+        $this->_externalLink = $externalLink;
+        $this->getElement('externalLink')->setValue($externalLink);
+        return $this;
+    }
+
+    public function getExternalLink()
+    {
+        return $this->_externalLink;
+    }
 
 	public function lockField($fieldName) {
 		$this->getElement($fieldName)

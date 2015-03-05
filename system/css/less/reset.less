@@ -1,0 +1,223 @@
+@import "base/variables";
+// Table of Content
+//==================================================
+//	Reset & Basics
+//	Reset Form
+//	Grid system
+//  Reset for all navigation items, related-products
+//==================================================
+@import "base/normalize";
+
+// Reset & Basics
+//==================================================
+*{
+    -webkit-touch-callout       : none; //если надо, то запрещаем выделение текста
+    -webkit-tap-highlight-color : rgba(0, 0, 0, 0); //убираем фон подсветки ссылок и кнопок
+    -webkit-text-size-adjust    : none; //фиксим баг в IOS cо шкалированием в landscape
+}
+::-moz-selection{
+    background : @text-select-bg;
+    color      : @text-select-color;
+}
+::selection{
+    background : @text-select-bg;
+    color      : @text-select-color;
+}
+
+body{
+    -webkit-font-smoothing : subpixel-antialiased !important;
+    -ms-touch-action       : manipulation;
+    touch-action           : manipulation;
+}
+blockquote, q{
+    quotes : none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after{
+    content : '';
+    content : none;
+}
+em{ font-style : italic; }
+table{
+    border-spacing  : 0;
+    border-collapse : collapse;
+    //    word-break      : break-all
+}
+a:focus, [type="checkbox"]:focus, [type="radio"]:focus, *:focus{
+    outline : none;
+}
+a, [type="submit"], [type="button"], button, [type="checkbox"], [type="radio"]{ cursor : pointer; }
+img, [type="checkbox"], [type="radio"]{ vertical-align : middle; }
+img{
+    max-width : 100%;
+    height    : auto;
+}
+
+.fb-like-box{
+    & > span, iframe{
+        position : relative !important;
+        width    : 100% !important;
+        //        height   : auto !important;
+    }
+}
+.mobile iframe{
+    width : 100%;
+}
+.gall{
+    .inline-block;
+}
+.gmaps{
+    color     : #000;
+    max-width : 100%;
+    img{ max-width : none; }
+}
+
+.ltr{
+    direction    : ltr;
+    unicode-bidi : bidi-override;
+}
+
+.rtl{
+    direction    : rtl;
+    unicode-bidi : bidi-override;
+}
+
+[contenteditable="true"]{
+    .inline-block();
+    background : @input-bg;
+    border     : @input-border-width solid @input-border-color;
+    cursor     : text;
+    padding    : @padding-mini-vertical @padding-mini-horizontal;
+}
+
+//// Reset Form
+////==================================================
+dl, dt, dd{
+    margin : 0;
+}
+input, select, textarea, button{
+    font-family : inherit;
+    font-weight : normal;
+    .placeholder();
+}
+
+// Reset width of input images, buttons, radios, checkboxes
+button,
+[type="file"],
+[type="image"],
+[type="submit"],
+[type="reset"],
+[type="button"],
+[type="radio"],
+[type="checkbox"]{
+    width : auto; // Override of generic input selector
+}
+[type="file"]{
+    border  : none;
+    padding : 0;
+}
+[type="color"]{
+    padding : 0;
+}
+
+textarea{
+    vertical-align : top;
+    line-height    : normal;
+    .resize();
+}
+
+[type="checkbox"], [type="radio"]{
+    padding : 0;
+    border  : none;
+    height  : auto;
+
+    &:focus{
+        .box-shadow(none; @input-shadow-focus) !important;
+    }
+}
+
+// Make multiple select elements height not fixed
+select[multiple],
+select[size]{
+    height : auto;
+}
+
+// Fix optgroup Firefox bug per https://github.com/twitter/bootstrap/issues/7611
+select optgroup{
+    font-style  : inherit;
+    font-size   : inherit;
+    font-family : inherit;
+}
+
+button, [type="button"], [type="reset"], [type="submit"]{
+    -webkit-appearance : button;
+
+    &:focus{
+        .box-shadow(none; @input-shadow-focus);
+    }
+}
+
+[disabled]{
+    cursor : default;
+}
+
+.reset-style{
+    .reset-style;
+}
+
+.seotoaster-loader{
+    position   : fixed;
+    left       : 2px;
+    right      : 2px;
+    top        : 2px;
+    z-index    : 1000;
+    padding    : 10px 0;
+    text-align : center;
+    font-size  : 32px;
+    color      : #fff;
+    background : @brand-primary;
+    .opacity(0.9);
+}
+
+// Overlays
+.ui-widget-overlay{
+    position   : fixed;
+    top        : 0;
+    right      : 0;
+    bottom     : 0;
+    left       : 0;
+    z-index    : 1000;
+    background : #000;
+    .opacity(0.5);
+
+    & ~ .ui-widget-overlay{
+        display : none;
+    }
+}
+
+[aria-describedby="toasterPopup"]{
+    position    : fixed !important;
+    right       : 0 !important;
+    left        : 0 !important;
+    line-height : 0 !important;
+    margin      : auto !important;
+    padding     : auto !important;
+    border      : none !important;
+    max-width   : none !important;
+}
+
+.clear{
+    display    : block;
+    clear      : both;
+    overflow   : hidden;
+    visibility : hidden;
+    height     : 0;
+}
+
+.clearfix{
+    .clearfix-mixin() !important;
+
+    span&{
+        display : block;
+    }
+}

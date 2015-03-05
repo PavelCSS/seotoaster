@@ -5,11 +5,13 @@
  *
  * @author Eugene I. Nezhuta [Seotoaster Dev Team] <eugene@seotoaster.com>
  */
-class Tools_Page_Tools {
+class Tools_Page_Tools
+{
 
 	const PLACEHOLDER_NOIMAGE = 'system/images/noimage.png';
 
-    public static function getPreview($page, $crop = false) {
+    public static function getPreview($page, $crop = false)
+    {
 	    $websiteHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
         $configHelper  = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
 	    $path          = (bool)$crop ? $websiteHelper->getPreviewCrop() : $websiteHelper->getPreview() ;
@@ -38,10 +40,49 @@ class Tools_Page_Tools {
 	    return $websiteHelper->getUrl() . self::PLACEHOLDER_NOIMAGE;
     }
 
+    /**
+     * Returns information about preview page, checks crop preview
+     * @param        $pageId
+     * @param bool   $croped
+     * @param string $cropSizeSubfolder
+     *
+     * @return array
+     */
+    public static function getPreviewFilePath($pageId, $croped = false, $cropSizeSubfolder = '')
+    {
+        $websiteHelper     = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
+        $cropSizeSubfolder = ($croped && !empty($cropSizeSubfolder)) ? trim($cropSizeSubfolder, '/').'/' : '';
+        $infoPreview       = array(
+            'sitePath'        => $websiteHelper->getPath(),
+            'previewPath'     => $websiteHelper->getPreview(),
+            'previewCropPath' => $websiteHelper->getPreviewCrop(),
+            'sizeSubfolder'   => $cropSizeSubfolder,
+            'fileName'        => '',
+            'path'            => '',
+            'fullPath'        => ''
+        );
+        $pathPreview = ($croped) ? $websiteHelper->getPreviewCrop() : $websiteHelper->getPreview();
+        if ($croped && $cropSizeSubfolder != '') {
+            $pathPreview .= $cropSizeSubfolder;
+        }
+        $page = Application_Model_Mappers_PageMapper::getInstance()->find($pageId);
+        if ($page instanceof Application_Model_Models_Page) {
+            $infoPreview['fileName'] = $page->getPreviewImage();
+            $fullPath                = $websiteHelper->getPath().$pathPreview.$page->getPreviewImage();
+            if (is_file($fullPath) && is_readable($fullPath)) {
+                $infoPreview['path']     = $pathPreview.$page->getPreviewImage();
+                $infoPreview['fullPath'] = $fullPath;
+            }
+        }
+
+        return $infoPreview;
+    }
+
 	/**
 	 * @deprecated Use Tools_Page_Tools::getPreview() instead. Will be removed in 2.2
 	 */
-	public static function getPreviewPath($pageId, $capIfNoPreview = false, $croped = false) {
+	public static function getPreviewPath($pageId, $capIfNoPreview = false, $croped = false)
+    {
 		Tools_System_Tools::debugMode() && error_log('Called deprecated Tools_Page_Tools::getPreviewPath(). Use Tools_Page_Tools::getPreview() instead');
 		$websiteHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
 		$configHelper  = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
@@ -69,16 +110,30 @@ class Tools_Page_Tools {
 		return $websiteUrl . 'system/images/noimage.png';
 	}
 
-	public static function getDraftPages() {
+	public static function getDraftPages()
+    {
 		$cacheHelper    = Zend_Controller_Action_HelperBroker::getStaticHelper('cache');
 		if(null === ($draftPages = $cacheHelper->load(Helpers_Action_Cache::KEY_DRAFT, Helpers_Action_Cache::PREFIX_DRAFT))) {
 			$draftPages = Application_Model_Mappers_PageMapper::getInstance()->fetchAllDraftPages();
-			$cacheHelper->save(Helpers_Action_Cache::KEY_DRAFT, $draftPages, Helpers_Action_Cache::PREFIX_DRAFT, array(), Helpers_Action_Cache::CACHE_LONG);
+			$cacheHelper->save(Helpers_Action_Cache::KEY_DRAFT, $draftPages, Helpers_Action_Cache::PREFIX_DRAFT, array(Helpers_Action_Cache::TAG_DRAFT), Helpers_Action_Cache::CACHE_LONG);
 		}
 		return $draftPages;
 	}
 
-	public static function getLandingPage($type) {
+    public static function getDraftPagesCount()
+    {
+        $cacheHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('cache');
+
+        if (null === ($draftPagesCount = $cacheHelper->load(Helpers_Action_Cache::KEY_DRAFT_COUNT, Helpers_Action_Cache::PREFIX_DRAFT))) {
+            $draftPagesCount = Application_Model_Mappers_PageMapper::getInstance()->getDraftPagesCount();
+            $cacheHelper->save(Helpers_Action_Cache::KEY_DRAFT_COUNT, $draftPagesCount, Helpers_Action_Cache::PREFIX_DRAFT, array(Helpers_Action_Cache::TAG_DRAFT), Helpers_Action_Cache::CACHE_LONG);
+        }
+
+        return $draftPagesCount;
+    }
+
+	public static function getLandingPage($type)
+    {
 		if(!isset($type) || empty ($type)) {
 			throw new Exceptions_SeotoasterException('You should specify landing page type');
 		}
@@ -102,7 +157,8 @@ class Tools_Page_Tools {
      * @static
      * @return null
      */
-    public static function getProductCategoryPage() {
+    public static function getProductCategoryPage()
+    {
 		// We need to know product category page url
 		// This url specified in the bundle plugin "Shopping"
 		// But this plugin may not be present in the system (not recommended)
@@ -114,12 +170,14 @@ class Tools_Page_Tools {
 		return Application_Model_Mappers_PageMapper::getInstance()->findByUrl($pageUrl);
 	}
 
-	public static function getPagesCountByTemplate($templateName) {
+	public static function getPagesCountByTemplate($templateName)
+    {
 		$pageDbTable   = new Application_Model_DbTable_Page();
 		return $pageDbTable->getAdapter()->query($pageDbTable->select()->where('template_id="' . $templateName . '"'))->rowCount();
 	}
 
-    public static function getPageOptions($activeOnly = false) {
+    public static function getPageOptions($activeOnly = false)
+    {
         $prepared = array();
         $options  = Application_Model_Mappers_PageOptionMapper::getInstance()->fetchOptions($activeOnly);
         if(!empty($options)) {
@@ -134,7 +192,8 @@ class Tools_Page_Tools {
         return $prepared;
     }
 
-    public static function processPagePreviewImage($pageUrl, $tmpPreviewFile = null){
+    public static function processPagePreviewImage($pageUrl, $tmpPreviewFile = null)
+    {
         $websiteHelper      = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
         $pageHelper         = Zend_Controller_Action_HelperBroker::getStaticHelper('page');
         $websiteConfig      = Zend_Registry::get('website');

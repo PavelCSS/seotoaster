@@ -7,19 +7,85 @@
 <?php else: ?>
     <!-- probably for we have to change resource passing to the isAllowed. Not it is not obivious why we are checking RESOURCE_PLUGINS -->
     <?php if(Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_PLUGINS)): ?>
-        <a class="tpopup" title="<?php echo $this->translate('Edit order'); ?>" data-url="<?php echo $this->websiteUrl; ?>backend/backend_featured/order/id/<?php echo $this->faId; ?>" data-pheight="650" data-pwidth="480" href="javascript:;"><?php echo $this->translate('Edit order'); ?></a>
+        <a class="tpopup" title="<?php echo $this->translate('Edit order'); ?>" data-url="<?php echo $this->websiteUrl; ?>backend/backend_featured/order/id/<?php echo $this->faId; ?>" data-pheight="560" data-pwidth="480" href="javascript:;"><?php echo $this->translate('Edit order') . ' - <em>' . $this->faName . '</em>';?></a>
     <?php endif; ?>
-    <ul id="<?php echo preg_replace('~[^A-z0-9]+~', '-', $this->faName); ?>" class="featureditem">
+    <ul id="<?php echo preg_replace('~[^A-z0-9]+~', '-', $this->faName); ?>" class="featureditem <?php echo $this->listClass; ?>">
         <?php foreach($this->faPages as $page): ?>
+        <?php if (isset($this->tmplFaContent)) : ?>
             <li>
-                <?php if($this->useImage): ?>
-                <a class="page-teaser-image" href="<?php echo $this->escape($this->websiteUrl . $page->getUrl()); ?>"><img alt="<?php echo strip_tags($page->getH1());?>" src="<?php echo $this->escape(Tools_Page_Tools::getPreview($page, (($this->useImage == 'img') ? false : true))); ?>" /></a>
+            <?php
+                if ($page instanceof Application_Model_Models_Page) {
+                    $parser = new Tools_Content_Parser($this->tmplFaContent, $page->toArray());
+                    echo $parser->parseSimple();
+                    unset($parser);
+                }
+            ?>
+            </li>
+        <?php else : ?>
+            <li>
+                <?php
+                $url          = $page->getUrl();
+                $extraOptions = $page->getExtraOptions();
+
+                // Is news-index page
+                if (!empty($extraOptions)
+                    && in_array('newslog', Tools_Plugins_Tools::getEnabledPlugins(true))
+                    && in_array(Newslog::OPTION_PAGE_INDEX, $extraOptions)
+                ) {
+                    $url = Newslog_Models_Mapper_ConfigurationMapper::getInstance()->fetchConfigParam('folder');
+                    if ($url !== '') {
+                        $url = trim($url, '/').'/';
+                    }
+                }
+                ?>
+
+                <?php if($page->getExternalLinkStatus() === '1'):?>
+                    <?php $pageUrl = $this->escape($page->getExternalLink());?>
+                    <?php $targetBlank = 'target="_blank"';?>
+                <?php else:?>
+                    <?php $pageUrl = $this->escape($this->websiteUrl.$url);?>
+                    <?php $targetBlank = '';?>
+                <?php endif;?>
+
+                <?php if ($this->useImage): ?>
+                    <?php
+                    $infoPreview = Tools_Page_Tools::getPreviewFilePath(
+                        $page->getId(),
+                        (($this->useImage == 'img') ? false : true),
+                        $this->cropSizeSubfolder
+                    );
+                    // Image exists
+                    if (!empty($infoPreview['fullPath'])) {
+                        $path = $infoPreview['path'];
+                    }
+                    // Cropped image
+                    elseif ($this->useImage == 'imgc' && !empty($infoPreview['fileName'])) {
+                        $path       = $infoPreview['previewPath'].$infoPreview['fileName'];
+                        $cropStatus = Tools_Image_Tools::resizeByParameters(
+                            $infoPreview['sitePath'].$infoPreview['previewPath'].$infoPreview['fileName'],
+                            $this->cropParams[1],
+                            $this->cropParams[2],
+                            true,
+                            $infoPreview['sitePath'].$infoPreview['previewCropPath'].$infoPreview['sizeSubfolder'],
+                            true
+                        );
+                        if ($cropStatus === true) {
+                            $path = $infoPreview['previewCropPath'].$infoPreview['sizeSubfolder'].$infoPreview['fileName'];
+                        }
+                    }
+                    // No image
+                    else {
+                        $path = 'system/images/noimage.png';
+                    }
+                    ?>
+                    <a class="page-teaser-image" href="<?php echo $pageUrl; ?>" <?php echo $targetBlank;?>><img alt="<?php echo strip_tags($page->getH1());?>" src="<?php echo $this->websiteUrl.$this->escape($path); ?>" /></a>
                 <?php endif; ?>
-                <a href="<?php echo $this->escape($this->websiteUrl . $page->getUrl()); ?>" title="<?php echo  strip_tags($page->getH1()); ?>" class="page-title"><?php echo $page->getNavName(); ?></a>
-	            <?php if($this->faPageDescriptionLength): ?>
+                <a href="<?php echo $pageUrl; ?>" title="<?php echo strip_tags($page->getH1()); ?>" <?php echo $targetBlank;?> class="page-title"><?php echo $page->getNavName(); ?></a>
+	            <?php if ($this->faPageDescriptionLength): ?>
                 <span><?php echo Tools_Text_Tools::cutText($page->getTeaserText(), $this->faPageDescriptionLength); ?></span>
                 <?php endif;?>
             </li>
+        <?php endif; ?>
         <?php endforeach; ?>
     </ul>
 <?php endif; ?>

@@ -20,7 +20,7 @@ class Backend_SeoController extends Zend_Controller_Action {
         if(!Tools_Security_Acl::isAllowed(Tools_Security_Acl::RESOURCE_PAGE_PUBLIC)) {
             $this->redirect($this->_helper->website->getUrl(), array('exit' => true));
         }
-        if(!Tools_Security_Acl::isActionAllowed()) {
+        if(!Tools_Security_Acl::isActionAllowed(Tools_Security_Acl::RESOURCE_SEO)) {
             $this->redirect($this->_helper->website->getUrl(), array('exit' => true));
         }
 		$this->_helper->AjaxContext()->addActionContexts(array(
@@ -73,10 +73,7 @@ class Backend_SeoController extends Zend_Controller_Action {
 		$redirectForm->setToasterPages($pageMapper->fetchIdUrlPairs());
 		$redirectForm->setDefault('fromUrl', 'http://');
 
-		if(!$this->getRequest()->isPost()) {
-			$this->view->redirects = $redirectMapper->fetchRedirectMap();
-		}
-		else {
+		if ($this->getRequest()->isPost()) {
 			if($redirectForm->isValid($this->getRequest()->getParams())) {
 				$data          = $redirectForm->getValues();
 				$redirect      = new Application_Model_Models_Redirect();
@@ -89,11 +86,20 @@ class Backend_SeoController extends Zend_Controller_Action {
 					$this->_helper->response->fail(implode('<br />', $inDbValidator->getMessages()));
 					exit;
 				}
-				$redirect->setFromUrl(Tools_System_Tools::getUrlPath($data['fromUrl']));
-				$redirect->setDomainFrom(Tools_System_Tools::getUrlScheme($data['fromUrl']) . '://' . Tools_System_Tools::getUrlHost($data['fromUrl']) . '/');
+                $websiteUrl = $this->_helper->website->getUrl();
+                $withSubfolder = Tools_System_Tools::getUrlPath($websiteUrl);
+                if ($withSubfolder && preg_match('~'.preg_quote($websiteUrl, '/').'~', $data['fromUrl'])) {
+                    $cleanUrl = trim(str_replace($websiteUrl, '', $data['fromUrl']), '/');
+                    $redirect->setFromUrl($cleanUrl);
+                    $redirect->setDomainFrom($websiteUrl);
+                }else{
+                    $redirect->setFromUrl(Tools_System_Tools::getUrlPath($data['fromUrl']));
+                    $redirect->setDomainFrom(Tools_System_Tools::getUrlScheme($data['fromUrl']) . '://' . Tools_System_Tools::getUrlHost($data['fromUrl']) . '/');
+                }
+
 				if(intval($data['toUrl'])) {
 					$page = $pageMapper->find($data['toUrl']);
-					$redirect->setDomainTo($this->_helper->website->getUrl());
+					$redirect->setDomainTo($websiteUrl);
 					$redirect->setToUrl($page->getUrl());
 					$redirect->setPageId($page->getId());
 				}
@@ -304,7 +310,9 @@ class Backend_SeoController extends Zend_Controller_Action {
 			$pageMapper       = Application_Model_Mappers_PageMapper::getInstance();
 			$cid              = intval($this->getRequest()->getParam('cid'));
 			$categoryPage     = ($cid != Application_Model_Models_Page::IDCATEGORY_DEFAULT) ? $pageMapper->find($cid) : $cid;
-			$siloRelatedPages = $pageMapper->findByParentId(($categoryPage instanceof Application_Model_Models_Page) ? $categoryPage->getId() : $categoryPage);
+            $siloRelatedPages = $pageMapper->findByParentId(
+                    ($categoryPage instanceof Application_Model_Models_Page) ? $categoryPage->getId() : $categoryPage
+            );
 			if($categoryPage === null) {
 				throw new Exceptions_SeotoasterException($this->_translator->translate('Cannot load category page'));
 			}
@@ -314,12 +322,19 @@ class Backend_SeoController extends Zend_Controller_Action {
 					$silo             = $siloMapper->findByName(($categoryPage instanceof Application_Model_Models_Page) ? $categoryPage->getNavName() : $this->_helper->language->translate('Without category'));
 					$silo             = ($silo instanceof Application_Model_Models_Silo) ? $silo : new Application_Model_Models_Silo();
 					if($categoryPage instanceof Application_Model_Models_Page) {
+                        $relatedPages = array($categoryPage);
+                        if (is_array($siloRelatedPages) && !empty($siloRelatedPages)) {
+                            $relatedPages = array_merge($siloRelatedPages, $relatedPages);
+                        }
 						$silo->setName($categoryPage->getNavName())
-							->setRelatedPages(array_merge($siloRelatedPages, array($categoryPage)));
+							->setRelatedPages($relatedPages);
+                        unset($relatedPages);
 					}
 					else {
-						$silo->setName($this->_helper->language->translate('Without category'))
-							->setRelatedPages($siloRelatedPages);
+						$silo->setName($this->_helper->language->translate('Without category'));
+                        if (!empty($siloRelatedPages)) {
+                            $silo->setRelatedPages($siloRelatedPages);
+                        }
 					}
 					$siloId = $siloMapper->save($silo);
 					if($siloId) {
@@ -389,13 +404,25 @@ class Backend_SeoController extends Zend_Controller_Action {
         if(($sitemapType = $this->getRequest()->getParam('type', '')) == Tools_Content_Feed::SMFEED_TYPE_REGULAR) {
             //regular sitemap.xml requested
             if(null === ($this->view->pages = $this->_helper->cache->load('sitemappages', 'sitemaps_'))) {
-                $pages = Application_Model_Mappers_PageMapper::getInstance()->fetchAll();
+                if (in_array('newslog', Tools_Plugins_Tools::getEnabledPlugins(true))) {
+                    $this->view->newsPageUrlPath = Newslog_Models_Mapper_ConfigurationMapper::getInstance()->fetchConfigParam('folder');
+                }
+                $pageMapper = Application_Model_Mappers_PageMapper::getInstance();
+                $where = $pageMapper->getDbTable()->getAdapter()->quoteInto('external_link_status <> ?', '1');
+                $pages = Application_Model_Mappers_PageMapper::getInstance()->fetchAll($where);
                 if(is_array($pages) && !empty($pages)) {
-                    array_walk($pages, function($page, $key) use(&$pages) {
-                        if($page->getExtraOption(Application_Model_Models_Page::OPT_PROTECTED)) {
-                            unset($pages[$key]);
+
+                    $quoteInstalled = Tools_Plugins_Tools::findPluginByName('quote')->getStatus() == Application_Model_Models_Plugin::ENABLED;
+                    $pages = array_filter($pages, function($page) use($quoteInstalled) {
+                        if($page->getExtraOption(Application_Model_Models_Page::OPT_PROTECTED) ||
+                                                 $page->getDraft() ||
+                                                 $page->getIs404page() ||
+                                                 ($quoteInstalled && (intval($page->getParentId()) === Quote::QUOTE_CATEGORY_ID))) {
+                            return false;
                         }
+                        return true;
                     });
+
                 } else {
                     $pages = array();
                 }
