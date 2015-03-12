@@ -37,16 +37,17 @@ class Backend_PageController extends Zend_Controller_Action {
     }
 
     public function pageAction() {
+        $mapper      = Application_Model_Mappers_PageMapper::getInstance();
         $checkFaPull = false; //flag shows that system needs to check featured areas in session
         $pageForm    = new Application_Form_Page();
         $pageId      = $this->getRequest()->getParam('id');
         $pageLang    = $this->getRequest()->getParam('lang');
-        $mapper      = Application_Model_Mappers_PageMapper::getInstance();
-        if(isset($pageLang)){
-            $mapper->setName('page_' . $pageLang);
-        }
 
-        // $mapper->setOptions(array('_name' => 'page' . $pageLang));
+        if(isset($pageLang) && !empty($pageLang)){
+            $mapper->setName('page_' . $pageLang);
+        }else{
+            $mapper->setName('page');
+        }
 
         if ($pageId) {
             // search page by id
@@ -225,7 +226,14 @@ class Backend_PageController extends Zend_Controller_Action {
                 if ($externalLink && !$optimized) {
                     $redirectTo = 'index.html';
                 }
-                $this->_helper->response->success(array('redirectTo' => $redirectTo));
+                if(!empty($pageLang)){
+                    $redirectTo = $pageLang . '/' . $redirectTo;
+                }
+                $this->_helper->response->success(
+                    array(
+                        'redirectTo'  => $redirectTo
+                    )
+                );
                 exit;
             }
             $messages = array_merge($pageForm->getMessages(), $messages);

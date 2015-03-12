@@ -4,11 +4,11 @@
         array(
             'innerHeaderHtml'     => 'Edit header',
             'helpSection'         => $this->helpSection,
-            'localizationSection' => array(true, $this->localizationSection)
+            'localizationSection' => $this->localizationSection
         )
     ); ?>
     <?php
-    $this->contentForm->setAction($this->url());
-    echo $this->contentForm;
+        $this->contentForm->setAction($this->url());
+        echo $this->contentForm;
     ?>
 </div>

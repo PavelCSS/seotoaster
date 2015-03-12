@@ -44,6 +44,36 @@
     <div class="footer grid_12">
         <?php echo $this->contentForm->getElement('submit'); ?>
     </div>
+    <script>
+        var containerId = $('#containerId').val();
+        var lang        = '<?php echo $this->localizationSection; ?>';
+        var href        = location.href;
+
+        if(href.indexOf('lang/')){
+            href = href.substring(0, href.indexOf('/lang'));
+        }
+
+        $('[name="localization"]').on('change', function(){
+            var $this         = $(this);
+            var currentLang   = $this.data('lang');
+            var ajaxUrl       = href + '/lang/' + lang;
+            var newFormAction = href + '/lang/' + currentLang;
+            showConfirm('Save changes?', function(){
+                $.ajax({
+                    url     : ajaxUrl,
+                    type    : 'POST',
+                    data    : $('#frm-page').serialize(),
+                    success : function(response){
+                        location.href = newFormAction;
+                    }
+                });
+                lang = currentLang;
+            }, function(){
+                location.href = newFormAction;
+                lang = currentLang;
+            });
+        });
+    </script>
 </div>
 <?php
     $this->headScript()

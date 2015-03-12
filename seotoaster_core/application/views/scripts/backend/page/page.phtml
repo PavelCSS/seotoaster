@@ -179,6 +179,30 @@
             }
         });
     });
+
+    var pageId     = $('#pageId').val();
+    var lang       = '<?php echo $this->localizationSection; ?>';
+
+    $('[name="localization"]').on('change', function(){
+        var $this         = $(this);
+        var currentLang   = $this.data('lang');
+        var ajaxUrl       = $('#website_url').val() + 'backend/backend_page/page/id/' + pageId + '/lang/' + lang;
+        var newFormAction = $('#website_url').val() + 'backend/backend_page/page/id/' + pageId + '/lang/' + currentLang;
+        showConfirm('Save changes?', function(){
+            $.ajax({
+                url     : ajaxUrl,
+                type    : 'POST',
+                data    : $('#frm-page').serialize(),
+                success : function(response){
+                    location.href = newFormAction;
+                }
+            });
+            lang = currentLang;
+        }, function(){
+            location.href = newFormAction;
+            lang = currentLang;
+        });
+    });
 </script>
 
 <?php $this->headScript()

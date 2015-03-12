@@ -345,7 +345,6 @@ class Application_Model_Mappers_PageMapper extends Application_Model_Mappers_Abs
             $localization = explode(',', $configHelper->getConfig('localization'));
             foreach($localization as $lang){
                 $this->setName('page_' . $lang);
-                $where = $this->getDbTable()->getAdapter()->quoteInto('id = ?', $page->getId());
                 $this->getDbTable()->delete($where);
             }
         }

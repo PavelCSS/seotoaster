@@ -28,8 +28,22 @@ class Application_Model_Mappers_ContainerMapper extends Application_Model_Mapper
 			'published'       => $container->getPublished(),
 			'publishing_date' => $container->getPublishingDate()
 		);
+
 		if(!$container->getId()) {
-			return $this->getDbTable()->insert($data);
+            $dbTable = new $this->_dbTable;
+            $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
+            if(!empty($configHelper->getConfig('localization'))){
+                $containerId = $this->getDbTable()->insert($data);
+                $localization = explode(',', $configHelper->getConfig('localization'));
+                $newData = array_merge(array('id' => $containerId), $data);
+                foreach($localization as $lang){
+                    $this->setName('container_' . $lang);
+                    $this->getDbTable()->insert($newData);
+                }
+            }
+
+            $this->setName('container');
+            return $this->getDbTable()->insert($data);
 		}
 		else {
 			return $this->getDbTable()->update($data, array('id = ?' => $container->getId()));
