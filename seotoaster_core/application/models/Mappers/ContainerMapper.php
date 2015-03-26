@@ -12,7 +12,7 @@ class Application_Model_Mappers_ContainerMapper extends Application_Model_Mapper
 
 	protected $_model   = 'Application_Model_Models_Container';
 
-    public function setName($name){
+    public function setDbTableName($name){
         $this->_dbTable->setName($name);
     }
 
@@ -37,12 +37,12 @@ class Application_Model_Mappers_ContainerMapper extends Application_Model_Mapper
                 $localization = explode(',', $configHelper->getConfig('localization'));
                 $newData = array_merge(array('id' => $containerId), $data);
                 foreach($localization as $lang){
-                    $this->setName('container_' . $lang);
+                    $this->setDbTableName('container_' . $lang);
                     $this->getDbTable()->insert($newData);
                 }
             }
 
-            $this->setName('container');
+            $this->setDbTableName('container');
             return $this->getDbTable()->insert($data);
 		}
 		else {

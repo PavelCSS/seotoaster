@@ -4,9 +4,6 @@
 
 <div class="closebutton">
 	<?php
-    if($this->localizationSection === NULL){
-        $this->localizationSection = true;
-    }
     if(isset($this->localizationSection)){
         $website      = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
         $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
@@ -14,7 +11,7 @@
         if ($localization) {
             $contentLocalization = '<div class="btn-set">';
 
-            $checked = !is_string($this->localizationSection) ? 'checked' : '';
+            $checked = empty($this->localizationSection) ? 'checked' : '';
             $contentLocalization .= '<input id="lang" type="radio" class="processed" name="localization" ' .  $checked . ' data-lang="">'
                 . '<label class="fade p5px pointer" for="lang">'
                     . '<img alt="' . $configHelper->getConfig('language') . '" class="lang-select" src="' . $website->getUrl() . 'system/images/flags/' . $configHelper->getConfig('language') . '.png" border="0">'

@@ -38,10 +38,14 @@ class Backend_ContentController extends Zend_Controller_Action {
 
         // content help section
         $this->view->helpSection  = 'content';
-        $this->view->localizationSection = $this->getRequest()->getParam('lang');
+        $contentLang = $this->getRequest()->getParam('lang');
+        $this->view->localizationSection = $contentLang ? $contentLang : '';
         $container = Application_Model_Mappers_ContainerMapper::getInstance();
-        if(isset($this->view->localizationSection)){
-            $container->getDbTable()->setName('container_' . $this->view->localizationSection);
+
+        if(isset($contentLang) && !empty($contentLang)){
+            $container->getDbTable()->setDbTableName('container_' . $contentLang);
+        }else{
+            $container->getDbTable()->setDbTableName('container');
         }
 
 		$this->_helper->AjaxContext()->addActionContext('loadfiles', 'json')->initContext('json');

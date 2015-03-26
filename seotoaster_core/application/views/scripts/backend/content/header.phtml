@@ -7,9 +7,13 @@
             'localizationSection' => $this->localizationSection
         )
     ); ?>
-    <?php
-        $this->contentForm->setAction($this->url());
-        echo $this->contentForm;
-//        <input type="hidden" name="secureToken" class="secureToken" value="<?php echo $this->secureToken;?>" />
-    ?>
+    <form id="frm_content" action="<?php echo $this->url(); ?>" class="<?php echo $this->contentForm->getAttrib('class');?>" method="post" enctype="application/x-www-form-urlencoded">
+        <?php echo $this->contentForm->getElement('content'); ?>
+        <?php echo $this->contentForm->getElement('submit'); ?>
+        <?php echo $this->contentForm->getElement('containerType'); ?>
+        <?php echo $this->contentForm->getElement('containerName'); ?>
+        <?php echo $this->contentForm->getElement('pageId'); ?>
+        <?php echo $this->contentForm->getElement('containerId'); ?>
+        <input type="hidden" name="secureToken" class="secureToken" value="<?php echo $this->secureToken;?>" />
+    </form>
 </div>

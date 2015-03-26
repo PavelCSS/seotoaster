@@ -255,7 +255,7 @@ class Backend_PageController extends Zend_Controller_Action {
 
         // page help section
         $this->view->helpSection = ($pageId) ? 'editpage' : 'addpage';
-        $this->view->localizationSection = $pageLang;
+        $this->view->localizationSection = $pageLang ? $pageLang : '';
 
         if($page->getOptimized()) {
             $pageForm->lockFields(array('h1', 'headerTitle', 'url', 'navName', 'metaDescription', 'metaKeywords', 'teaserText'));
