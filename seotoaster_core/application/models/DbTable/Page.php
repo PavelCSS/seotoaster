@@ -104,10 +104,10 @@ class Application_Model_DbTable_Page extends Zend_Db_Table_Abstract {
             $this->setName('page_' . $_COOKIE["localization"]);
             $this->_localization = '_'. $_COOKIE["localization"];
         }
-
-        $where   = $this->getAdapter()->quoteInto('page' . $this->_localization . '.url = ?', $pageUrl);
-        $orWhere = $this->getAdapter()->quoteInto('optimized.url = ?', $pageUrl);
-        $select  = $this->_getOptimizedSelect(false, array('id', 'parent_id', 'template_id', 'last_update', 'silo_id', 'protected', 'system', 'news'));
+        
+        $where      = $this->getAdapter()->quoteInto('page.url = ?', $pageUrl);
+        $orWhere    = $this->getAdapter()->quoteInto('optimized.url = ?', $pageUrl);
+        $select     = $this->_getOptimizedSelect(false, array('id', 'parent_id', 'template_id', 'last_update', 'silo_id', 'protected', 'system', 'news', 'preview_image'));
 
         $select->join('template', 'page' . $this->_localization . '.template_id=template.name', null)
             ->columns(array(

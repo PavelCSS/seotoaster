@@ -1,7 +1,7 @@
 <?php
 
 /*!
- * cssmin.php 2.4.8-2
+ * cssmin.php v2.4.8-4
  * Author: Tubal Martin - http://tubalmartin.me/
  * Repo: https://github.com/tubalmartin/YUI-CSS-compressor-PHP-port
  *
@@ -110,7 +110,7 @@ class CssMin
         $l = strlen($css);
 
 
-        // if the number of characters is 25000 or less, do not chunk
+        // if the number of characters is 5000 or less, do not chunk
         if ($l <= $css_chunk_length) {
             $css_chunks[] = $css;
         } else {
@@ -294,7 +294,7 @@ class CssMin
         // Remove the spaces before the things that should not have spaces before them.
         // But, be careful not to turn "p :link {...}" into "p:link{...}"
         // Swap out any pseudo-class colons with the token, and then swap back.
-        $css = preg_replace_callback('/(?:^|\})(?:(?:[^\{\:])+\:)+(?:[^\{]*\{)/', array($this, 'replace_colon'), $css);
+        $css = preg_replace_callback('/(?:^|\})[^\{]*\s+\:/', array($this, 'replace_colon'), $css);
 
         // Remove spaces before the things that should not have spaces before them.
         $css = preg_replace('/\s+([\!\{\}\;\:\>\+\(\)\]\~\=,])/', '$1', $css);
@@ -345,7 +345,7 @@ class CssMin
         $css = preg_replace('/(^|[^0-9]):(?:0?\.)?0(?:em|ex|ch|rem|vw|vh|vm|vmin|cm|mm|in|px|pt|pc|%|deg|g?rad|m?s|k?hz)/iS', '${1}:0', $css);
 
         // 0% step in a keyframe? restore the % unit
-        $css = preg_replace_callback('/(@[a-z\-]*?keyframes[^\{]*?\{)(.*?\}\s*\})/iS', array($this, 'replace_keyframe_zero'), $css);
+		$css = preg_replace_callback('/(@[a-z\-]*?keyframes[^\{]+\{)(.*?)(\}\})/iS', array($this, 'replace_keyframe_zero'), $css);
 
         // Replace 0 0; or 0 0 0; or 0 0 0 0; with 0.
         $css = preg_replace('/\:0(?: 0){1,3}(;|\}| \!)/', ':0$1', $css);
@@ -601,7 +601,7 @@ class CssMin
 
     private function replace_keyframe_zero($matches)
     {
-        return $matches[1] . preg_replace('/0\s*,/', '0%,', preg_replace('/\s*0\s*\{/', '0%{', $matches[2]));
+        return $matches[1] . preg_replace('/0(\{|,[^\)\{]+\{)/', '0%$1', $matches[2]) . $matches[3];
     }
 
     private function rgb_to_hex($matches)
