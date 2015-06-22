@@ -37,17 +37,10 @@ class Backend_PageController extends Zend_Controller_Action {
     }
 
     public function pageAction() {
-        $mapper      = Application_Model_Mappers_PageMapper::getInstance();
         $checkFaPull = false; //flag shows that system needs to check featured areas in session
         $pageForm    = new Application_Form_Page();
         $pageId      = $this->getRequest()->getParam('id');
-        $pageLang    = $this->getRequest()->getParam('lang');
-
-        if(isset($pageLang) && !empty($pageLang)){
-            $mapper->setName('page_' . $pageLang);
-        }else{
-            $mapper->setName('page');
-        }
+        $mapper      = Application_Model_Mappers_PageMapper::getInstance();
 
         $secureToken = Tools_System_Tools::initZendFormCsrfToken($pageForm, Tools_System_Tools::ACTION_PREFIX_PAGES);
 
@@ -232,14 +225,7 @@ class Backend_PageController extends Zend_Controller_Action {
                 if ($externalLink && !$optimized) {
                     $redirectTo = 'index.html';
                 }
-                if(!empty($pageLang)){
-                    $redirectTo = $pageLang . '/' . $redirectTo;
-                }
-                $this->_helper->response->success(
-                    array(
-                        'redirectTo'  => $redirectTo
-                    )
-                );
+                $this->_helper->response->success(array('redirectTo' => $redirectTo));
                 exit;
             }
             $messages = array_merge($pageForm->getMessages(), $messages);
@@ -255,7 +241,6 @@ class Backend_PageController extends Zend_Controller_Action {
 
         // page help section
         $this->view->helpSection = ($pageId) ? 'editpage' : 'addpage';
-        $this->view->localizationSection = $pageLang ? $pageLang : '';
 
         if($page->getOptimized()) {
             $pageForm->lockFields(array('h1', 'headerTitle', 'url', 'navName', 'metaDescription', 'metaKeywords', 'teaserText'));

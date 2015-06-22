@@ -15,15 +15,8 @@
 	if($this->sambaOptimized):
 		$optimizedCheck = '<label class="ml2">' . $this->formCheckbox('sambaOptimized', $this->sambaOptimized, array('checked' => $this->sambaOptimized, 'id' => 'toggle-optimized')) . '&nbsp;' . $this->translate('Optimized') . '</label>';
 	endif;
-    echo $this->partial(
-        'admin' . DIRECTORY_SEPARATOR . '_header.phtml',
-        array(
-            'innerHeaderHtml' => $draftOrLive . $optimizedCheck . $externalLink,
-            'helpSection' => $this->helpSection,
-            'localizationSection' => $this->localizationSection
-        )
-    );
-    ?>
+	echo $this->partial('admin' . DIRECTORY_SEPARATOR . '_header.phtml', array('innerHeaderHtml' => $draftOrLive . $optimizedCheck. $externalLink, 'helpSection' => $this->helpSection));
+	?>
 
 	<div id="templatelist" class="show-right seotoaster"></div>
 	<div id="falist" class="show-right seotoaster">
@@ -116,7 +109,6 @@
         <input type="hidden" class="secureToken" name="secureToken" value="<?php echo $this->secureToken;?>"/>
         <?php echo $this->pageForm->getElement('updatePage'); ?>
         <input type="hidden" name="original-page-url" id="original-page-url" value="<?php echo $this->pageForm->getElement('url')->getValue(); ?>">
-        <input type="hidden" name="localization-page" id="localization-page" value="<?php echo $this->localizationSection; ?>">
 	</form>
 </div>
 <script type="text/javascript">
@@ -179,30 +171,6 @@
                 }
 
             }
-        });
-    });
-
-    var pageId     = $('#pageId').val();
-    var lang       = '<?php echo $this->localizationSection; ?>';
-
-    $('[name="localization"]').on('change', function(){
-        var $this         = $(this);
-        var currentLang   = $this.data('lang');
-        var ajaxUrl       = $('#website_url').val() + 'backend/backend_page/page/id/' + pageId + '/lang/' + lang;
-        var newFormAction = $('#website_url').val() + 'backend/backend_page/page/id/' + pageId + '/lang/' + currentLang;
-        showConfirm('Save changes?', function(){
-            $.ajax({
-                url     : ajaxUrl,
-                type    : 'POST',
-                data    : $('#frm-page').serialize(),
-                success : function(response){
-                    location.href = newFormAction;
-                }
-            });
-            lang = currentLang;
-        }, function(){
-            location.href = newFormAction;
-            lang = currentLang;
         });
     });
 </script>

@@ -9,13 +9,7 @@ class Widgets_Menu_Menu extends Widgets_Abstract {
 
     private $_menuTemplate = null;
 
-    protected $_localization = null;
-
     protected function  _init() {
-        if (isset($_COOKIE["localization"]) && $_COOKIE["localization"]) {
-            $this->_localization = $_COOKIE["localization"] . '/';
-        }
-
         $this->_cacheTags = array(strtolower(__CLASS__));
         $this->_cacheId   = strtolower(__CLASS__).'_lifeTime_'.$this->_cacheLifeTime;
         $this->_widgetId  .= '-role-'.Zend_Controller_Action_HelperBroker::getStaticHelper('Session')->getCurrentUser()->getRoleId();
@@ -51,7 +45,7 @@ class Widgets_Menu_Menu extends Widgets_Abstract {
             }
         }
         $rendererName = '_render' . ucfirst($menuType) . 'Menu';
-        $this->_view->websiteUrl = $website->getUrl() . $this->_localization;
+        $this->_view->websiteUrl = $website->getUrl();
         if (method_exists($this, $rendererName)) {
             return $this->$rendererName();
         }
@@ -142,8 +136,6 @@ class Widgets_Menu_Menu extends Widgets_Abstract {
         $website = Zend_Controller_Action_HelperBroker::getStaticHelper('website');
         $dictionary = array();
 
-        $localization = isset($_COOKIE["localization"]) ? $_COOKIE["localization"] . '/' : null;
-
         if ($parentCategoryPage === null) {
             $menuHtml = '<ul class="main_menu" >';
         } else {
@@ -165,7 +157,7 @@ class Widgets_Menu_Menu extends Widgets_Abstract {
                     continue;
                 }
                 if ($prop === 'url') {
-                    $item = $website->getUrl() . $localization . $item;
+                    $item = $website->getUrl() . $item;
                     if ($page['external_link_status'] === '1'){
                         $item = $page['external_link'];
                         $dictionary['$page:target_blank'] = 'target=_blank';

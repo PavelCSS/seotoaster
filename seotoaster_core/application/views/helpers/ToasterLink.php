@@ -45,9 +45,8 @@ class Zend_View_Helper_ToasterLink extends Zend_View_Helper_Abstract {
 				$routeName = 'backend';
 				break;
 		}
-        $localization = isset($_COOKIE["localization"]) ? array('lang' => $_COOKIE["localization"]) : array();
 		if (is_array($params)) {
-			$routeParams = array_merge($routeParams, $params, $localization);
+			$routeParams = array_merge($routeParams, $params);
 		}
 		$scheme = Zend_Controller_Front::getInstance()->getRequest()->getScheme();
 		$host = Zend_Controller_Front::getInstance()->getRequest()->getHttpHost();

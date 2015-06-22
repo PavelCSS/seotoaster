@@ -21,12 +21,7 @@ class Application_Model_DbTable_Config extends Zend_Db_Table_Abstract {
 			$row->value = $value;
 		}
 		
-		$row->save();
-
-        Tools_System_Tools::cloneLocalizationDbTable();
-        Tools_System_Tools::removeLocalizationDbTable();
-
-		return true;
+		return $row->save();
 	}
 	
 	

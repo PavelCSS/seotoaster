@@ -6,18 +6,6 @@
         $('input[title], .tooltip').tooltip({
             track: true
         });
-
-        $('.lang-select').on('change', function(){
-            var checkedField = $('.lang-select:checked');
-            var valChecked = '';
-            for(var i = 0; i < checkedField.length; i++){
-                if(valChecked.length){
-                    valChecked += ',';
-                }
-                valChecked += checkedField[i].getAttribute('data-lang');
-            }
-            $('#localization').val(valChecked)
-        });
     });
 </script>
 <div class="seotoaster container">
@@ -34,7 +22,6 @@
                 <li><a href="#security-config"><?php echo $this->translate('Admin access'); ?></a></li>
                 <li><a href="#advanced-config"><?php echo $this->translate('Advanced'); ?></a></li>
                 <li><a href="#securityForm-config"><?php echo $this->translate('Security'); ?></a></li>
-                <li><a href="#localizationForm-config"><?php echo $this->translate('Localization'); ?></a></li>
             <?php endif; ?>
         </ul>
         <fieldset id="general-config" class="content-small-footer pr0 pl0">
@@ -160,27 +147,6 @@
                             'Get your own reCAPTCHA key here now.'
                         ); ?></a>
                 </div>
-            </fieldset>
-            <fieldset id="localizationForm-config" class="content-small-footer scroll">
-                <h3>Select website localization:</h3>
-                <div class="column_3 full-width">
-                    <?php
-                        $localization = explode(',', $this->configForm->getElement('localization')->getValue());
-
-                        foreach($this->localizationList as $key=>$lang){
-                            $checked = in_array($key, $localization, true) ? 'checked' : '';
-                            if($this->configForm->getElement('language')->getValue() === $key){
-                                continue;
-                            }
-                            echo '<label class="pointer background" for="lang-' . $lang . '">'
-                                    . '<input id="lang-' . $key . '" class="lang-select fl-right switcher" type="checkbox" data-lang="' . $key . '" name="localization-' . $key . '"' .  $checked . '> '
-                                    . '<img alt="' . $lang . '" class="align-baseline" src="' . $this->websiteUrl . 'system/images/flags/' . $key . '.png" border="0"> '
-                                    . $lang
-                                . '</label>';
-                        }
-                    ?>
-                </div>
-                <?php echo $this->configForm->getElement('localization')->renderViewHelper(); ?>
             </fieldset>
         <?php endif; ?>
         <?php echo $this->configForm->getElement('submit')->renderViewHelper(); ?>

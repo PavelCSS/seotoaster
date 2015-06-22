@@ -1,12 +1,5 @@
 <div class="seotoaster container">
-	<?php echo $this->partial(
-        'admin' . DIRECTORY_SEPARATOR . '_header.phtml',
-        array(
-            'innerHeaderHtml'     => 'Edit header',
-            'helpSection'         => $this->helpSection,
-            'localizationSection' => $this->localizationSection
-        )
-    ); ?>
+	<?php echo $this->partial('admin' . DIRECTORY_SEPARATOR . '_header.phtml', array('innerHeaderHtml' => 'Edit header', 'helpSection' => $this->helpSection)); ?>
     <form id="frm_content" action="<?php echo $this->url(); ?>" class="<?php echo $this->contentForm->getAttrib('class');?>" method="post" enctype="application/x-www-form-urlencoded">
         <?php echo $this->contentForm->getElement('content'); ?>
         <?php echo $this->contentForm->getElement('submit'); ?>

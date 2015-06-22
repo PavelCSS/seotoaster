@@ -12,10 +12,6 @@ class Application_Model_Mappers_ContainerMapper extends Application_Model_Mapper
 
 	protected $_model   = 'Application_Model_Models_Container';
 
-    public function setDbTableName($name){
-        $this->_dbTable->setName($name);
-    }
-
 	public function save($container) {
 		if(!$container instanceof Application_Model_Models_Container) {
 			throw new Exceptions_SeotoasterException('Given parameter should be and Application_Model_Models_Container instance');
@@ -28,22 +24,8 @@ class Application_Model_Mappers_ContainerMapper extends Application_Model_Mapper
 			'published'       => $container->getPublished(),
 			'publishing_date' => $container->getPublishingDate()
 		);
-
 		if(!$container->getId()) {
-            $dbTable = new $this->_dbTable;
-            $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
-            if(!empty($configHelper->getConfig('localization'))){
-                $containerId = $this->getDbTable()->insert($data);
-                $localization = explode(',', $configHelper->getConfig('localization'));
-                $newData = array_merge(array('id' => $containerId), $data);
-                foreach($localization as $lang){
-                    $this->setDbTableName('container_' . $lang);
-                    $this->getDbTable()->insert($newData);
-                }
-            }
-
-            $this->setDbTableName('container');
-            return $this->getDbTable()->insert($data);
+			return $this->getDbTable()->insert($data);
 		}
 		else {
 			return $this->getDbTable()->update($data, array('id = ?' => $container->getId()));

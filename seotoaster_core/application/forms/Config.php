@@ -29,7 +29,6 @@ class Application_Form_Config extends Application_Form_Secure
 	protected $_canonicalScheme;
     protected $_recaptchaPublicKey;
     protected $_recaptchaPrivateKey;
-    protected $_localization;
 
 	/**
 	 * Wether or not to include protected pages into the menus
@@ -482,11 +481,6 @@ class Application_Form_Config extends Application_Form_Secure
 			)
 		));
 
-        $this->addElement('hidden', 'localization', array(
-            'value' => $this->_localization,
-            'label' => 'Website localization',
-        ));
-
         $this->setElementDecorators(array('ViewHelper', 'Label'));
 	}
 
@@ -525,18 +519,5 @@ class Application_Form_Config extends Application_Form_Secure
 	public function getCanonicalScheme()
     {
 		return $this->_canonicalScheme;
-	}
-
-	public function setLocalization($localization)
-    {
-		$this->_localization = $localization;
-        $this->getElement('localization')->setValue($this->_localization);
-
-        return $this;
-	}
-
-	public function getLocalization()
-    {
-		return $this->_localization;
 	}
 }

@@ -26,10 +26,6 @@ class Application_Model_Mappers_PageMapper extends Application_Model_Mappers_Abs
         'teaser_text'
     );
 
-    public function setName($name){
-        $this->_dbTable->setName($name);
-    }
-
     /**
      * @param Application_Model_Models_Page $page
      * @return mixed
@@ -67,19 +63,8 @@ class Application_Model_Mappers_PageMapper extends Application_Model_Mappers_Abs
         if ($page->getId()) {
             $this->getDbTable()->update($data, array('id = ?' => $page->getId()));
         } else {
-            $this->setName('page');
             $pageId = $this->getDbTable()->insert($data);
             $page->setId($pageId);
-
-            $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
-            if(!empty($configHelper->getConfig('localization'))){
-                $localization = explode(',', $configHelper->getConfig('localization'));
-                $newData = array_merge(array('id' => $pageId), $data);
-                foreach($localization as $lang){
-                    $this->setName('page_' . $lang);
-                    $this->getDbTable()->insert($newData);
-                }
-            }
         }
 
         //save page options
@@ -242,18 +227,6 @@ class Application_Model_Mappers_PageMapper extends Application_Model_Mappers_Abs
 
     public function findByUrl($pageUrl)
     {
-        $pageUrlLang = explode('/', $pageUrl);
-        $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
-        $localization = explode(',', $configHelper->getConfig('localization'));
-
-        if (!empty($localization[0]) && in_array($pageUrlLang[0], $localization, true)) {
-            setcookie("localization", $pageUrlLang[0]);
-            unset($pageUrlLang[0]);
-            $pageUrl = implode('/', $pageUrlLang);
-        }else{
-            setcookie("localization", null);
-        }
-
         if (!$pageUrl) {
             $pageUrl = Helpers_Action_Website::DEFAULT_PAGE;
         }
@@ -336,18 +309,8 @@ class Application_Model_Mappers_PageMapper extends Application_Model_Mappers_Abs
 
     public function delete(Application_Model_Models_Page $page)
     {
-        $this->setName('page');
         $where = $this->getDbTable()->getAdapter()->quoteInto('id = ?', $page->getId());
         $deleteResult = $this->getDbTable()->delete($where);
-
-        $configHelper = Zend_Controller_Action_HelperBroker::getStaticHelper('config');
-        if(!empty($configHelper->getConfig('localization'))){
-            $localization = explode(',', $configHelper->getConfig('localization'));
-            foreach($localization as $lang){
-                $this->setName('page_' . $lang);
-                $this->getDbTable()->delete($where);
-            }
-        }
         $page->notifyObservers();
         return $deleteResult;
     }

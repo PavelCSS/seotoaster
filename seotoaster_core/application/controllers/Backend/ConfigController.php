@@ -33,9 +33,6 @@ class Backend_ConfigController extends Zend_Controller_Action {
 		$isSuperAdminLogged = ($loggedUser->getRoleId() === Tools_Security_Acl::ROLE_SUPERADMIN);
 		$this->view->isSuperAdmin = $isSuperAdminLogged;
 
-        $this->view->localizationList = $this->_helper->language->getLanguages(false);
-//        $this->view->localizationList = Zend_Locale::getTranslationList('Language');
-
 		if ($this->getRequest()->isPost()) {
             if (!$isSuperAdminLogged) {
                 $configForm->removeElement('suLogin');

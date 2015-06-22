@@ -84,11 +84,9 @@ class Backend_PluginController extends Zend_Controller_Action {
             $miscData     = Zend_Registry::get('misc');
 
             if ($plugin->getStatus() == Application_Model_Models_Plugin::DISABLED && $plugin->getId() == null) {
-                $localizationMethod = 'cloneLocalizationDbTable';
                 $statusFile = Application_Model_Models_Plugin::INSTALL_FILE_NAME;
                 $observerAction = Tools_Plugins_GarbageCollector::CLEAN_ONCREATE;
             } else {
-                $localizationMethod = 'removeLocalizationDbTable';
                 $statusFile = Application_Model_Models_Plugin::UNINSTALL_FILE_NAME;
                 $observerAction = Tools_Plugins_GarbageCollector::CLEAN_ONDELETE;
             }
@@ -182,8 +180,6 @@ class Backend_PluginController extends Zend_Controller_Action {
                 $this->view->endisButton = false;
             }
 
-
-            Tools_System_Tools::$localizationMethod($plugin->getName());
             $this->_helper->cache->clean(null, null, array('plugins'));
             $this->_helper->cache->clean('admin_addmenu', $this->_helper->session->getCurrentUser()->getRoleId());
         }

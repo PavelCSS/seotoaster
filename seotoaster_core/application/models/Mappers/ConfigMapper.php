@@ -18,9 +18,6 @@ class Application_Model_Mappers_ConfigMapper extends Application_Model_Mappers_A
 			$dbTable->updateConfigParam($key, $value);
 		}, $this->getDbTable());
 
-        Tools_System_Tools::cloneLocalizationDbTable();
-        Tools_System_Tools::removeLocalizationDbTable();
-		
 		return true;
 	}
 	
